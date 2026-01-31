@@ -14,11 +14,6 @@ plugins:
 # 検索を有効化
 search_enabled: true
 
-# サイドバーのナビゲーション
-nav_external_links:
-  - title: GitHub
-    url: https://github.com/dik-ab/curriculum
-
 # フッター
 back_to_top: true
 back_to_top_text: "トップに戻る"
