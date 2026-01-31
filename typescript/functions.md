@@ -501,8 +501,7 @@ add(5, 3);  // 正しい
 
 2つの数値を受け取り、引き算した結果を返す関数`subtract`を作成してください。
 
-<details>
-<summary>答えを見る</summary>
+**答え：**
 
 ```typescript
 function subtract(a: number, b: number): number {
@@ -513,14 +512,11 @@ console.log(subtract(10, 3));  // 7
 console.log(subtract(20, 5));  // 15
 ```
 
-</details>
-
 ### 問題2：挨拶を表示する関数
 
 名前を受け取り、「こんにちは、〇〇さん！」とコンソールに表示する関数`sayHello`を作成してください（返り値なし）。
 
-<details>
-<summary>答えを見る</summary>
+**答え：**
 
 ```typescript
 function sayHello(name: string): void {
@@ -531,14 +527,11 @@ sayHello("太郎");  // "こんにちは、太郎さん！"
 sayHello("花子");  // "こんにちは、花子さん！"
 ```
 
-</details>
-
 ### 問題3：最大値を求める関数
 
 2つの数値を受け取り、大きい方を返す関数`max`を作成してください。
 
-<details>
-<summary>答えを見る</summary>
+**答え：**
 
 ```typescript
 function max(a: number, b: number): number {
@@ -560,8 +553,6 @@ function max(a: number, b: number): number {
   return a > b ? a : b;
 }
 ```
-
-</details>
 
 ## まとめ
 
