@@ -15,14 +15,21 @@ WindowsでLinux環境を動かせるWSLを使うことで、Mac同様のター�
 
 WSLをインストールすると、**Ubuntu**というLinux環境が使えるようになります。このコースでは、TypeScriptを学ぶ際にターミナルを使用しますが、**Windowsの方はこのUbuntuを使用します**。
 
-**重要：** 以下のインストール手順では、WSLとVS Codeを一度にインストールできます。
+**参考：WSL2について詳しく知りたい方はこちら**
+[WSL2のインストール手順（Qiita）](https://qiita.com/nanbuwks/items/55acf8107bad347d2cd0)
+
+## 2. Visual Studio Code（VS Code）のインストール
+
+軽量で高機能な無料のコードエディタです。拡張機能も豊富で、あらゆるプログラミング言語に対応しています。
+
+**重要：** 以下のインストール手順では、**WSL（Ubuntu）とVS Codeを一度にインストールできます**。
 
 **インストール方法はこちら：**
-[WSL2のインストール手順（Qiita）](https://qiita.com/nanbuwks/items/55acf8107bad347d2cd0)
+[VSCodeのインストール手順（スッキリわかるIT塾）](https://sukkiri.jp/technologies/devtools/vscode_win.html)
 
 このリンクの手順に従えば、WSL（Ubuntu）とVS Codeの両方がインストールされます。
 
-## 2. VS Code上でターミナルを使う
+## 3. VS Code上でターミナルを使う
 
 VS Codeをインストールしたら、VS Code上でUbuntuのターミナルを使えるように設定しましょう。
 
