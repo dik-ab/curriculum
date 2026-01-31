@@ -1,7 +1,10 @@
 title: Curriculum
 description: プログラミング学習カリキュラム
 
-# remote_themeを使用（GitHub Pagesとローカルの両方で動作）
+# ローカルプレビュー用
+theme: just-the-docs
+
+# GitHub Pages用（remote_themeが優先される）
 remote_theme: just-the-docs/just-the-docs
 
 # プラグイン
