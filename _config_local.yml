@@ -1,0 +1,7 @@
+# ローカルプレビュー用の設定
+# remote_themeを無効化
+remote_theme: null
+
+# プラグインからjekyll-remote-themeを除外
+plugins:
+  - jekyll-feed
