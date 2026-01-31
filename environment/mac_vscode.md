@@ -1,3 +1,10 @@
+---
+layout: default
+title: Mac版 VS Code セットアップ
+parent: 環境構築
+nav_order: 1
+---
+
 # Mac開発環境のセットアップ
 
 MacでVisual Studio Codeをインストールして、快適な開発環境を構築しましょう。
