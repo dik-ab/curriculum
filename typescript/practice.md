@@ -83,17 +83,13 @@ node dist/exercise01.js
 学生: はい
 ```
 
-<details>
-<summary>ヒント</summary>
+**ヒント：**
 
 - 変数に型をつけて宣言しましょう
 - テンプレート文字列（`` `文字列${変数}` ``）を使うと便利です
 - boolean値は、三項演算子で「はい」「いいえ」に変換できます
 
-</details>
-
-<details>
-<summary>解答例</summary>
+**解答例：**
 
 **src/exercise01.ts:**
 
@@ -121,8 +117,6 @@ node dist/exercise01.js
 学生: はい
 ```
 
-</details>
-
 ## 問題2：消費税計算プログラム
 
 商品の価格を受け取り、消費税込みの価格を計算する関数を作成してください。
@@ -139,16 +133,12 @@ node dist/exercise01.js
 2500円の税込み価格: 2750円
 ```
 
-<details>
-<summary>ヒント</summary>
+**ヒント：**
 
 - 税込み価格 = 元の価格 × 1.1
 - 関数の引数と返り値に型をつけましょう
 
-</details>
-
-<details>
-<summary>解答例</summary>
+**解答例：**
 
 **src/exercise02.ts:**
 
@@ -174,8 +164,6 @@ node dist/exercise02.js
 2500円の税込み価格: 2750円
 ```
 
-</details>
-
 ## 問題3：配列の平均値を計算
 
 数値の配列を受け取り、平均値を返す関数を作成してください。
@@ -191,17 +179,13 @@ node dist/exercise02.js
 [100, 85, 92, 88]の平均: 91.25
 ```
 
-<details>
-<summary>ヒント</summary>
+**ヒント：**
 
 - 合計を計算してから、要素数で割ります
 - 配列の要素数は`配列.length`で取得できます
 - 合計は、ループで計算するか、`reduce`メソッドを使います
 
-</details>
-
-<details>
-<summary>解答例</summary>
+**解答例：**
 
 **src/exercise03.ts:**
 
@@ -243,8 +227,6 @@ node dist/exercise03.js
 [100, 85, 92, 88]の平均: 91.25
 ```
 
-</details>
-
 ## 問題4：BMI計算プログラム
 
 体重（kg）と身長（m）を受け取り、BMIを計算する関数を作成してください。
@@ -260,8 +242,7 @@ node dist/exercise03.js
 体重70kg、身長1.75mのBMI: 22.86
 ```
 
-<details>
-<summary>解答例</summary>
+**解答例：**
 
 **src/exercise04.ts:**
 
@@ -289,8 +270,6 @@ node dist/exercise04.js
 体重70kg、身長1.75mのBMI: 22.86
 ```
 
-</details>
-
 ## 問題5：ユーザー情報の管理
 
 ユーザー情報を表すオブジェクト型を定義し、ユーザー情報を整形して表示する関数を作成してください。
@@ -307,16 +286,12 @@ node dist/exercise04.js
 ユーザー情報: 花子 (22歳) - hanako@example.com
 ```
 
-<details>
-<summary>ヒント</summary>
+**ヒント：**
 
 - オブジェクト型は`{ プロパティ名: 型 }`で定義します
 - 関数の引数にもオブジェクト型を指定できます
 
-</details>
-
-<details>
-<summary>解答例</summary>
+**解答例：**
 
 **src/exercise05.ts:**
 
@@ -354,8 +329,6 @@ node dist/exercise05.js
 ユーザー情報: 花子 (22歳) - hanako@example.com
 ```
 
-</details>
-
 ## 問題6：成績判定プログラム
 
 点数を受け取り、成績（A, B, C, D, F）を返す関数を作成してください。
@@ -380,16 +353,12 @@ node dist/exercise05.js
 50点: F
 ```
 
-<details>
-<summary>ヒント</summary>
+**ヒント：**
 
 - `if`文または`if-else`文を使います
 - 点数が高い方から順に判定すると簡単です
 
-</details>
-
-<details>
-<summary>解答例</summary>
+**解答例：**
 
 **src/exercise06.ts:**
 
@@ -431,8 +400,6 @@ node dist/exercise06.js
 50点: F
 ```
 
-</details>
-
 ## 問題7：FizzBuzz
 
 1から30までの数字を表示するプログラムを作成してください。ただし：
@@ -460,17 +427,13 @@ FizzBuzz
 ...
 ```
 
-<details>
-<summary>ヒント</summary>
+**ヒント：**
 
 - `for`ループで1から30まで繰り返します
 - 割り算の余りは`%`演算子で求められます（例：`15 % 3 === 0`なら3の倍数）
 - 3と5の両方の倍数（15の倍数）を最初にチェックすることが重要です
 
-</details>
-
-<details>
-<summary>解答例</summary>
+**解答例：**
 
 **src/exercise07.ts:**
 
@@ -533,8 +496,6 @@ Fizz
 FizzBuzz
 ```
 
-</details>
-
 ## 問題8：商品の合計金額計算
 
 商品の配列を受け取り、合計金額を計算する関数を作成してください。
@@ -551,16 +512,12 @@ FizzBuzz
 合計金額: 5800円
 ```
 
-<details>
-<summary>ヒント</summary>
+**ヒント：**
 
 - 配列をループして、各商品の`price × quantity`を合計します
 - `for...of`ループや`reduce`メソッドが使えます
 
-</details>
-
-<details>
-<summary>解答例</summary>
+**解答例：**
 
 **src/exercise08.ts:**
 
@@ -616,8 +573,6 @@ node dist/exercise08.js
 - 消しゴム: 80円 × 2個 = 160円
 - 合計: 1260円
 
-</details>
-
 ## 問題9：最大値・最小値を見つける
 
 数値の配列を受け取り、最大値と最小値を返す関数を作成してください。
@@ -632,8 +587,7 @@ node dist/exercise08.js
 最小値: 10, 最大値: 95
 ```
 
-<details>
-<summary>解答例</summary>
+**解答例：**
 
 **src/exercise09.ts:**
 
@@ -683,8 +637,6 @@ node dist/exercise09.js
 最小値: 10, 最大値: 95
 ```
 
-</details>
-
 ## 問題10：文字列を逆順にする
 
 文字列を受け取り、逆順にした文字列を返す関数を作成してください。
@@ -700,17 +652,13 @@ node dist/exercise09.js
 "TypeScript" → "tpircSepyT"
 ```
 
-<details>
-<summary>ヒント</summary>
+**ヒント：**
 
 - 文字列を配列に変換（`split("")`）
 - 配列を逆順にする（`reverse()`）
 - 配列を文字列に戻す（`join("")`）
 
-</details>
-
-<details>
-<summary>解答例</summary>
+**解答例：**
 
 **src/exercise10.ts:**
 
@@ -735,8 +683,6 @@ node dist/exercise10.js
 "Hello" → "olleH"
 "TypeScript" → "tpircSepyT"
 ```
-
-</details>
 
 ## おめでとうございます！
 
