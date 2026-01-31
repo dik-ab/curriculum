@@ -1,0 +1,23 @@
+// コンテンツの最大幅を広げる
+.main-content {
+  max-width: 1200px !important;
+}
+
+// サイドバーの幅を調整
+.side-bar {
+  width: 280px !important;
+}
+
+// メインコンテンツの左マージンを調整
+@media (min-width: 50rem) {
+  .main {
+    margin-left: 280px !important;
+  }
+}
+
+// より広い画面での最大幅
+@media (min-width: 66.5rem) {
+  .main-content {
+    max-width: 1400px !important;
+  }
+}
