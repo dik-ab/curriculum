@@ -366,8 +366,7 @@ let myAge = ?
 let isStudent = ?
 ```
 
-<details>
-<summary>答えを見る</summary>
+**答え：**
 
 ```typescript
 let myName: string = "太郎";  // 自分の名前に変えてください
@@ -375,27 +374,21 @@ let myAge: number = 25;       // 自分の年齢に変えてください
 let isStudent: boolean = true; // 学生ならtrue、そうでなければfalse
 ```
 
-</details>
-
 ### 問題2：配列
 
 好きな果物を3つ、配列で宣言してください。
 
-<details>
-<summary>答えを見る</summary>
+**答え：**
 
 ```typescript
 let favoriteFruits: string[] = ["りんご", "バナナ", "オレンジ"];
 ```
 
-</details>
-
 ### 問題3：オブジェクト
 
 本の情報を持つオブジェクトを作成してください。プロパティは`title`（タイトル）、`author`（著者）、`pages`（ページ数）です。
 
-<details>
-<summary>答えを見る</summary>
+**答え：**
 
 ```typescript
 let book: { title: string; author: string; pages: number } = {
@@ -404,8 +397,6 @@ let book: { title: string; author: string; pages: number } = {
   pages: 300
 };
 ```
-
-</details>
 
 ## まとめ
 
