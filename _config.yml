@@ -1,0 +1,15 @@
+title: Curriculum
+description: プログラミング学習カリキュラム
+theme: minima
+
+# プラグイン
+plugins:
+  - jekyll-relative-links
+
+# 相対リンクを有効化
+relative_links:
+  enabled: true
+  collections: true
+
+# Markdownの処理
+markdown: kramdown
