@@ -1,6 +1,15 @@
 // スマホ・タブレットではデフォルトのレスポンシブデザインを使用
 // デスクトップ（大画面）のみでコンテンツ幅を広げる
 
+// スマホサイズでハンバーガーメニュー（サイドバー）を画面幅いっぱいに
+@media (max-width: 49.99rem) {
+  .site-nav,
+  .side-bar {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
 // タブレット以上のサイズ（サイドバーが表示される画面）
 @media (min-width: 50rem) {
   .side-bar {
