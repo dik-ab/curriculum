@@ -1,3 +1,10 @@
+---
+layout: default
+title: Windows版 VS Code セットアップ
+parent: 環境構築
+nav_order: 2
+---
+
 # Windows開発環境のセットアップ
 
 Windows環境でも、Macと同じような開発環境を構築できます。以下の2つのツールをインストールしましょう。
