@@ -1,3 +1,10 @@
+---
+layout: default
+title: 拡張機能のセットアップ
+parent: 環境構築
+nav_order: 3
+---
+
 # 拡張機能のセットアップ
 
 ## まずはVS Codeを日本語化しよう
