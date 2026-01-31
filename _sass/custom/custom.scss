@@ -1,22 +1,30 @@
-// コンテンツの最大幅を広げる
-.main-content {
-  max-width: 1200px !important;
-}
+// スマホ・タブレットではデフォルトのレスポンシブデザインを使用
+// デスクトップ（大画面）のみでコンテンツ幅を広げる
 
-// サイドバーの幅を調整
-.side-bar {
-  width: 280px !important;
-}
-
-// メインコンテンツの左マージンを調整
+// タブレット以上のサイズ（サイドバーが表示される画面）
 @media (min-width: 50rem) {
+  .side-bar {
+    width: 280px !important;
+  }
+
   .main {
     margin-left: 280px !important;
   }
+
+  .main-content {
+    max-width: 1000px !important;
+  }
 }
 
-// より広い画面での最大幅
+// デスクトップサイズ（より広い画面）
 @media (min-width: 66.5rem) {
+  .main-content {
+    max-width: 1200px !important;
+  }
+}
+
+// 超ワイドスクリーン
+@media (min-width: 88rem) {
   .main-content {
     max-width: 1400px !important;
   }
