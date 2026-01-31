@@ -1,15 +1,18 @@
 title: Curriculum
 description: プログラミング学習カリキュラム
-theme: minima
+remote_theme: just-the-docs/just-the-docs
 
-# プラグイン
-plugins:
-  - jekyll-relative-links
+# 検索を有効化
+search_enabled: true
 
-# 相対リンクを有効化
-relative_links:
-  enabled: true
-  collections: true
+# サイドバーのナビゲーション
+nav_external_links:
+  - title: GitHub
+    url: https://github.com/dik-ab/curriculum
 
-# Markdownの処理
-markdown: kramdown
+# フッター
+back_to_top: true
+back_to_top_text: "トップに戻る"
+
+# カラースキーム
+color_scheme: light
