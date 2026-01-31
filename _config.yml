@@ -7,9 +7,8 @@ theme: just-the-docs
 # GitHub Pages用（remote_themeが優先される）
 remote_theme: just-the-docs/just-the-docs
 
-# プラグイン
+# プラグイン（GitHub Pagesではjekyll-remote-themeが自動的に有効化される）
 plugins:
-  - jekyll-remote-theme
   - jekyll-feed
 
 # 検索を有効化
