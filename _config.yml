@@ -1,6 +1,11 @@
 title: Curriculum
 description: プログラミング学習カリキュラム
+
+# GitHub Pagesではremote_themeを使用
 remote_theme: just-the-docs/just-the-docs
+
+# ローカルプレビューでは上の行をコメントアウトして、下の行のコメントを外す
+# theme: just-the-docs
 
 # 検索を有効化
 search_enabled: true
