@@ -28,16 +28,16 @@ bundle install
 ./serve.sh
 
 # または手動で
-bundle exec jekyll serve --config _config.yml,_config_local.yml
+bundle exec jekyll serve
 ```
 
 ブラウザで http://localhost:4000 にアクセスしてください。
 
 ## ファイル構成
 
-- `_config.yml` - GitHub Pages用のJekyll設定
-- `_config_local.yml` - ローカルプレビュー用の設定（remote_themeを無効化）
+- `_config.yml` - Jekyll設定（GitHub PagesとローカルPagesで共通）
 - `serve.sh` - ローカルプレビュー起動スクリプト
+- `Gemfile` - ローカル用の依存関係（jekyll-remote-themeは除外）
 - `environment/` - 環境構築ガイド
   - `mac_vscode.md` - Mac版 VS Code セットアップ
   - `windows_vscode.md` - Windows版 VS Code セットアップ

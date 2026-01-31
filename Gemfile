@@ -5,7 +5,8 @@ gem "just-the-docs", "0.10.0"
 
 group :jekyll_plugins do
   gem "jekyll-feed", "~> 0.12"
-  gem "jekyll-remote-theme"
+  # jekyll-remote-themeはローカルでは使用しない（GitHub Pagesでは自動的に有効化される）
+  # gem "jekyll-remote-theme"
 end
 
 # Windows and JRuby does not include zoneinfo files, so bundle the tzinfo-data gem
