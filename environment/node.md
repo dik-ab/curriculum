@@ -2,7 +2,7 @@
 layout: default
 title: Node.jsのインストール
 parent: 環境構築
-nav_order: 6
+nav_order: 7
 ---
 
 # Node.jsのインストール
