@@ -1,11 +1,7 @@
 title: Curriculum
 description: プログラミング学習カリキュラム
 
-# ローカルプレビュー用
 theme: just-the-docs
-
-# GitHub Pages用（remote_themeが優先される）
-remote_theme: just-the-docs/just-the-docs
 
 # プラグイン（GitHub Pagesではjekyll-remote-themeが自動的に有効化される）
 plugins:
