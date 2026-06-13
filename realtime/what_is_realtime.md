@@ -171,6 +171,20 @@ sequenceDiagram
 
 概念の比較ができたところで、4方式のうち今すぐ手持ちの知識だけで作れる「ポーリング」を実際に体験してみましょう。題材として、[バックエンド基礎のCRUD実践](../backend/crud_practice.html)で作ったメモAPI（`GET /memos`でメモ一覧を返すNestJSサーバー）が`http://localhost:3000`で起動しているものとします。
 
+ただし、準備が1つ必要です。これから作るHTMLファイルはWebサーバーを介さずブラウザで直接開くため、メモAPIとは別のオリジンからのfetchになり、そのままではブラウザに通信をブロックされてしまいます。メモAPIの`src/main.ts`に`app.enableCors();`を1行追加して、サーバーを再起動しておいてください。
+
+**`src/main.ts`（メモAPI側に追記）**
+
+```typescript
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.enableCors(); // この1行を追加
+  await app.listen(3000);
+}
+```
+
+- `app.enableCors()` — 別のオリジンからのリクエストをサーバーが受け付けるようにする設定です。ブラウザで`file://`として直接開いたページのoriginは`null`になるため、特定のoriginを指定する書き方ではなく、引数なしの`enableCors()`を使います。この仕組みの詳細は[CORSとプロキシ](../fullstack-todo/integration.html)で学びます。
+
 ブラウザだけで試せるよう、次のHTMLファイルを作ります。場所はどこでも構いません（例: デスクトップに`polling.html`）。
 
 **`polling.html`**

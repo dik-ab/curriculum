@@ -794,7 +794,7 @@ export async function apiFetch<T>(
 
   const res = await fetch(`${API_URL}${path}`, { ...options, headers });
 
-  if (res.status === 401) {
+  if (res.status === 401 && !path.startsWith("/auth/")) {
     clearToken();
     location.hash = "#/login";
     throw new Error("ログインが必要です");
@@ -823,7 +823,7 @@ export async function apiFetch<T>(
 - `new Headers(options.headers)` — 呼び出し側が指定したヘッダを引き継ぎつつ、追加のヘッダを安全に設定するために `Headers` オブジェクトに変換します。
 - `headers.set("Authorization", ...)` — トークンが保存されていれば、**すべてのリクエストに自動で** `Authorization: Bearer <token>` を付与します。画面側はトークンの存在を意識する必要がなくなります。
 - `headers.set("Content-Type", "application/json")` — ボディがあるリクエスト（POSTなど）にだけJSONのContent-Typeを付けます。
-- `if (res.status === 401)` — トークンが無効・期限切れなら、保存済みトークンを破棄してログイン画面（`#/login`）へ遷移します。どの画面からAPIを呼んでも、この1箇所で「再ログインへの誘導」が実現します。
+- `if (res.status === 401 && !path.startsWith("/auth/"))` — トークンが無効・期限切れなら、保存済みトークンを破棄してログイン画面（`#/login`）へ遷移します。どの画面からAPIを呼んでも、この1箇所で「再ログインへの誘導」が実現します。ただし`/auth/`で始まるパスは対象外です。`/auth/login`が返す401は「トークンが無効」ではなく「メールアドレスまたはパスワードが正しくない」という意味なので、ここでリダイレクトして握りつぶさず、下の`!res.ok`の処理に流してAPIのエラーメッセージをそのまま画面に表示させます。
 - `if (!res.ok)` — その他のエラー（400, 403, 409など）は、APIが返すエラーメッセージを取り出して `Error` として投げます。`ValidationPipe` のエラーは `message` が配列で返るため、配列なら改行で連結します。`res.json()` に失敗してもアプリが落ちないよう `.catch(() => null)` を添えています。
 - `if (res.status === 204)` — 204 No Contentはボディがないため、`res.json()` を呼ばずに `undefined` を返します（[いいね解除](./likes.html)などのDELETE系で使います）。
 
@@ -1042,7 +1042,8 @@ function TemporaryHome({ navigate }: { navigate: (to: string) => void }) {
     apiFetch<User & { email: string }>("/auth/me")
       .then(setMe)
       .catch(() => {
-        // 401 の場合は apiFetch がログイン画面へ遷移させる
+        // 取得に失敗した場合は表示名なしのまま表示する
+        // （/auth/ 系のパスは apiFetch の401リダイレクトの対象外）
       });
   }, []);
 
@@ -1117,7 +1118,7 @@ cd sns-app/frontend && pnpm run dev
 4. **ログイン維持**: ブラウザをリロードしても、ログイン状態が維持される（localStorageのトークンが残っているため）。
 5. **ログアウト**: 「ログアウト」ボタンを押すとログイン画面に戻り、localStorageの `token` が消えている。リロードしてもログイン画面のまま。
 
-さらに、開発者ツールで `localStorage.setItem("token", "fake-token")` と偽トークンを仕込んでからトップページを開いてみてください。`GET /auth/me` が401になり、`apiFetch` の401処理によって自動でログイン画面へ戻されます。Guard → 401 → トークン破棄、という防御の連携が機能している証拠です。
+さらに、開発者ツールで `localStorage.setItem("token", "fake-token")` と偽トークンを仕込んでからトップページを開いてみてください。`GET /auth/me` が401になり、表示名が出なくなります（Networkタブで401が確認できます）。Guardが偽トークンを確実に弾いている証拠です。なお`/auth/`系のパスは`apiFetch`の401リダイレクトの対象外なのでこの時点では画面遷移しませんが、この後の章で作る投稿などの認証必須APIが401を返したときは、`apiFetch`がトークンを破棄して自動でログイン画面へ戻します。
 
 ## 理解度チェック
 

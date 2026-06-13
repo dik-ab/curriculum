@@ -21,7 +21,7 @@ nav_order: 5
 まずはNest CLIでServiceを生成します。プロジェクトのルートで実行してください。
 
 ```bash
-nest g service memos
+pnpm exec nest g service memos
 ```
 
 実行結果の例:

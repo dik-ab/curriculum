@@ -33,13 +33,13 @@ nav_order: 4
 
 ## MemosControllerを生成する
 
-Nest CLIには、部品の雛形を生成する`nest generate`（短縮形は`nest g`）コマンドがあります。手で書いてもよいのですが、CLIを使うと**Moduleへの登録まで自動で行ってくれる**ため、登録忘れを防げます。
+Nest CLIには、部品の雛形を生成する`nest generate`（短縮形は`nest g`）コマンドがあります。手で書いてもよいのですが、CLIを使うと**Moduleへの登録まで自動で行ってくれる**ため、登録忘れを防げます。`@nestjs/cli`はプロジェクト作成時に開発用の依存としてインストール済みなので、`pnpm exec`を付けてプロジェクト内のCLIを実行します。
 
 プロジェクトのルート（`memo-api/`）で、まずメモ機能の箱となるModuleを、続いてControllerを生成します。
 
 ```bash
-nest g module memos
-nest g controller memos
+pnpm exec nest g module memos
+pnpm exec nest g controller memos
 ```
 
 実行結果の例:
@@ -371,7 +371,7 @@ search() {...}
 
 ## セルフレビュー
 
-- [ ] `nest g module` / `nest g controller`で部品を生成し、自動登録の内容を説明できる
+- [ ] `pnpm exec nest g module` / `pnpm exec nest g controller`で部品を生成し、自動登録の内容を説明できる
 - [ ] `@Controller`の引数と`@Get`等の引数からルートのパスを組み立てられる
 - [ ] パスパラメータ・クエリパラメータ・ボディの使い分けを具体例つきで説明できる
 - [ ] パスパラメータとクエリパラメータが文字列で届くことを説明し、適切に数値変換できる

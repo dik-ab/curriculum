@@ -103,6 +103,7 @@ async ask(question: string): Promise<{ answer: string; sources: string[] }> {
 
 - [Claude APIの基礎](claude_api.html)の「会話履歴：APIは前の会話を覚えていない」を読み返してください。`user`と`assistant`を交互に並べるのでした
 - Reactの`messages`ステートがそのまま履歴です。`fetch`のbodyに含めて送りましょう
+- ただし、`history`には**送信中の質問自身を含めない**こと。[Q&Aボットを構築する](build_rag_chat.html)のフロントはfetchの前に質問を`messages`ステートへ追加しているため、追加後のステートをそのまま渡すと`user`ロールが連続し、Claude APIが400エラーを返します。履歴は`assistant`で終わる状態にして送りましょう
 - DTOには配列のバリデーションが必要です。`@ValidateNested({ each: true })`や`@Type(() => ...)`を調べてみましょう
 - 検索（embedding）には**最新の質問だけ**を使うのが第一歩としては簡単です。「それ」のような指示語を含む質問の検索精度を上げたければ、「直前のやりとり＋最新の質問」をまとめてベクトル化する方法もあります
 - 履歴の上限を設けるのは、**入力トークン（＝料金）が会話のたびに増え続ける**のを防ぐためです
@@ -152,7 +153,13 @@ export class AskQuestionDto {
 **`src/chat/chat.service.ts`（Claude呼び出し部分の変更）**
 
 ```typescript
-const history = (dto.history ?? []).slice(-10); // 直近10メッセージに制限
+let history = (dto.history ?? []).slice(-10); // 直近10メッセージに制限
+
+// 末尾がuserだとAPIが組み立てるuserメッセージと連続して400になるため、
+// 念のためassistantで終わる状態に整える
+while (history.length > 0 && history[history.length - 1].role === 'user') {
+  history = history.slice(0, -1);
+}
 
 const message = await this.anthropic.messages.create({
   model: 'claude-sonnet-4-6',
@@ -169,6 +176,8 @@ const message = await this.anthropic.messages.create({
 ```
 
 検索用のembeddingは従来どおり最新の`question`だけで作り、Claudeには履歴＋資料＋質問を渡す、という分担です。フロント側は`messages`ステートから`role`と`content`だけを抜き出して`history`として送ります（出典など余計なプロパティは送らないこと）。
+
+このとき、`history`に**送信中の質問自身を含めない**よう注意してください。[Q&Aボットを構築する](build_rag_chat.html)のフロントはfetchの前に質問を`messages`ステートへ追加しているため、追加後のステートをそのまま渡すと、履歴末尾の`user`とサーバー側で組み立てる`user`（資料＋質問）が連続し、Claude APIが「rolesは交互に並べること」という400エラーを返します。質問を追加する**前**の`messages`（＝`assistant`で終わる履歴）から`history`を作って送るのが正解です。上のコードの`while`は、それでも末尾に`user`が残っていた場合の保険です。
 
 </details>
 

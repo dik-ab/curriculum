@@ -68,7 +68,7 @@ pnpm -v
 9.12.0
 ```
 
-このようにバージョン番号が表示されれば準備完了です。**本カリキュラムでは、これ以降パッケージマネージャはすべてpnpmを使います**（npm/yarnは使いません）。
+このようにバージョン番号が表示されれば準備完了です（バージョン番号は環境により異なります）。**本カリキュラムでは、これ以降パッケージマネージャはすべてpnpmを使います**（npm/yarnは使いません）。
 
 npmコマンドとの対応は次のとおりです。npmを前提に書かれた記事やドキュメントを読むときは、この表で読み替えてください。
 
@@ -225,25 +225,25 @@ my-react-app/
 **`src/main.tsx`**
 
 ```tsx
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
 import './index.css'
+import App from './App.tsx'
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
     <App />
-  </React.StrictMode>,
+  </StrictMode>,
 )
 ```
 
 **コード解説**
 
-- `import ReactDOM from 'react-dom/client'` — ReactをブラウザのDOMに結びつけるためのライブラリを読み込みます
+- `import { createRoot } from 'react-dom/client'` — ReactをブラウザのDOMに結びつけるための関数を読み込みます
 - `document.getElementById('root')!` — `index.html` の `<div id="root">` を取得します。**ここで入門編で学んだDOM操作が登場します**。Reactアプリで `getElementById` を書くのは、実質この1箇所だけです
 - 末尾の `!` — TypeScriptの**非nullアサーション**です。`getElementById` の戻り値の型は `HTMLElement | null`（[ユニオン型](../typescript/basic_types.html)）ですが、「`root` は必ず存在するので `null` ではない」と開発者がTypeScriptに伝えています
-- `ReactDOM.createRoot(...).render(...)` — 取得した要素を「Reactの描画先（ルート）」として登録し、`<App />` を描画します
-- `<React.StrictMode>` — 開発時に問題のある書き方を警告してくれる安全装置です。本番の動作には影響しません
+- `createRoot(...).render(...)` — 取得した要素を「Reactの描画先（ルート）」として登録し、`<App />` を描画します
+- `<StrictMode>` — 開発時に問題のある書き方を警告してくれる安全装置です。本番の動作には影響しません
 
 つまり `main.tsx` の役割は、「**`App` というコンポーネントを `#root` に描画せよ**」という橋渡しの一文です。
 
@@ -263,7 +263,7 @@ function App() {
   return (
     <>
       <div>
-        <a href="https://vite.dev" target="_blank">
+        <a href="https://vitejs.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
         </a>
         <a href="https://react.dev" target="_blank">
@@ -380,7 +380,7 @@ git commit -m "ViteでReactプロジェクトを作成"
 <details markdown="1">
 <summary>解答を見る</summary>
 
-ブラウザが `index.html` を読み込むと、`<script>` タグで指定された `src/main.tsx` が実行されます。`main.tsx` は `document.getElementById('root')` で空の `div` を取得し、`ReactDOM.createRoot(...).render(<App />)` によって、`App` コンポーネントが返す画面構造をその `div` の中に描画します。つまり、画面の中身はすべて `App.tsx` から始まるTypeScriptコードが生成しています。
+ブラウザが `index.html` を読み込むと、`<script>` タグで指定された `src/main.tsx` が実行されます。`main.tsx` は `document.getElementById('root')` で空の `div` を取得し、`createRoot(...).render(<App />)` によって、`App` コンポーネントが返す画面構造をその `div` の中に描画します。つまり、画面の中身はすべて `App.tsx` から始まるTypeScriptコードが生成しています。
 
 </details>
 

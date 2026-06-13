@@ -599,6 +599,17 @@ pnpm exec prisma migrate dev --name add_tags
 
   // タグを外す
   async removeTag(memoId: number, tagId: number) {
+    // 紐づけの存在チェック（なければ404）。存在しない行をdeleteすると500になるため
+    const memoTag = await this.prisma.memoTag.findUnique({
+      where: {
+        memoId_tagId: { memoId, tagId },
+      },
+    });
+    if (!memoTag) {
+      throw new NotFoundException(
+        `メモ ${memoId} にタグ ${tagId} は付いていません`,
+      );
+    }
     await this.prisma.memoTag.delete({
       where: {
         memoId_tagId: { memoId, tagId },

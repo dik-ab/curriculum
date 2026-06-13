@@ -156,7 +156,7 @@ pnpm exec prisma migrate dev --name init
 
 ```
 Prisma schema loaded from prisma/schema.prisma
-Datasource "db": PostgreSQL database "appdb", schema "public" at "localhost:5432"
+Datasource "db": PostgreSQL database "memo", schema "public" at "localhost:5432"
 
 Applying migration `20260612090000_init`
 
@@ -203,7 +203,7 @@ CREATE TABLE "Memo" (
 本当にテーブルができたか、psqlでも確認してみましょう。
 
 ```bash
-docker compose exec db psql -U postgres -d appdb -c "\dt"
+docker compose exec db psql -U postgres -d memo -c "\dt"
 ```
 
 実行結果の例:

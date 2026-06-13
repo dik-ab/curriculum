@@ -229,13 +229,13 @@ git log
 ```
 commit f4e5d6c7b8a9... (HEAD -> main)
 Author: Taro Yamada <taro@example.com>
-Date:   Thu Jun 12 10:30:00 2026 +0900
+Date:   Fri Jun 12 10:30:00 2026 +0900
 
     READMEに説明文を追加
 
 commit a1b2c3d4e5f6...
 Author: Taro Yamada <taro@example.com>
-Date:   Thu Jun 12 10:15:00 2026 +0900
+Date:   Fri Jun 12 10:15:00 2026 +0900
 
     READMEを追加
 ```

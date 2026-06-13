@@ -23,7 +23,7 @@ nav_order: 5
 - 各課題は「要件 → ヒント → 解答例」の順に並んでいます。**まずヒントを見ずに**、3層それぞれの変更点を書き出してから実装してください
 - 行き詰まったらヒントを開き、それでも詰まったら解答例を見て構いません。ただし解答例を見た場合も、**閉じてから自分の手で再実装**してください
 - 1つの課題が終わるたびに、curl（API）とブラウザ（画面）の両方で動作確認し、コミットしましょう
-- スキーマを変更する課題では、必ず `pnpm dlx prisma migrate dev` でマイグレーションを作ります（→ [モデル定義とマイグレーション](../database/schema_and_migration.html)）
+- スキーマを変更する課題では、必ず `pnpm exec prisma migrate dev` でマイグレーションを作ります（→ [モデル定義とマイグレーション](../database/schema_and_migration.html)）
 
 ## 課題1: 期限（dueDate）を追加する
 
@@ -65,7 +65,7 @@ model Todo {
 マイグレーションを実行します。
 
 ```bash
-pnpm dlx prisma migrate dev --name add-due-date
+pnpm exec prisma migrate dev --name add-due-date
 ```
 
 **`backend/src/todos/dto/create-todo.dto.ts`**
@@ -433,3 +433,5 @@ NULL許容にすれば、既存の行は「期限なし（NULL）」のまま、
 これで「実践: フルスタックTodoアプリ」のセクションは完了です。3層を自分の手で組み、貫いて変更する経験は、ここから先のすべての土台になります。
 
 次のセクションは[コード品質と開発ツール](../tooling/)です。今回書いたコードを題材に、PrettierとESLintでコードの品質を機械的に保つ方法を学びます。その後の[バックエンドテスト](../testing/)、そして最終プロジェクトの[SNS開発](../sns/)では、このTodoアプリとまったく同じ構成（DBはcompose、APIとフロントは `pnpm run dev`）・同じ開発の進め方（設計 → API → curl確認 → 画面 → つなぎ込み）を、より大きな規模で繰り返します。
+
+> **完成形のコード**: [practice/fullstack-todo](https://github.com/dik-ab/curriculum/tree/main/practice/fullstack-todo)（動作検証済み）。手詰まりになったら参照してください。

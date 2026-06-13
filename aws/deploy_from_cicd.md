@@ -57,6 +57,8 @@ flowchart LR
 > このページで増える費用はわずかです。GitHub Actionsはパブリックリポジトリなら無料（プライベートでも月2,000分の無料枠）、AWS側はCloudFrontの無効化（月1,000パスまで無料）とECRの保存量（[ライフサイクルルール](ecr_ecs.html)で最新5個に制限済み）程度です。
 >
 > ただし、自動デプロイの前提として**ApiStack等が起動している必要がある**ため、ALB・Fargate・RDSの時間課金（→ 各ページの注意）は引き続き発生します。動作確認を終えたら `cdk destroy` を忘れずに。OIDCプロバイダとIAMロール自体は**無料**なので、残しておいて構いません。
+>
+> なお、このページで作るCicdStackはFrontendStackやEcrStackのリソースを参照（クロススタック参照）します。スタックを削除する場合は、**参照している CicdStack を先に destroy してから FrontendStack / EcrStack を削除**してください。逆の順序では「Export ... is in use」というエラーで削除に失敗します。
 
 ## なぜアクセスキーを使わないのか — OIDCの仕組み
 
@@ -233,6 +235,8 @@ CicdStack.DeployRoleArn = arn:aws:iam::123456789012:role/github-actions-deploy
 | `DISTRIBUTION_ID` | `E1ABCDEFGHIJK` |
 | `ECR_REPOSITORY` | `sns-api` |
 
+この4つの変数は、このページの2本のワークフローだけでなく、[SNS開発の全体デプロイ](../sns/deploy.html)でも同じ名前のまま使い回します。
+
 ワークフローを書きます。YAMLの基本文法は[GitHub Actions基礎](../cicd/github_actions_basics.html)の復習です。
 
 **`.github/workflows/deploy-frontend.yml`**
@@ -246,6 +250,7 @@ on:
     branches: [main]
     paths:
       - "frontend/**"
+      - ".github/workflows/deploy-frontend.yml"
 
 permissions:
   id-token: write
@@ -263,8 +268,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: pnpm
+          node-version: '20'
+          cache: 'pnpm'
           cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: ビルド
@@ -292,10 +297,10 @@ jobs:
 
 **コード解説**
 
-- `on.push.branches: [main]` + `paths: "frontend/**"` … mainブランチに**フロントエンドのファイルが変更されたとき**だけ起動します。リポジトリは `frontend/` と `backend/` を持つモノレポ構成（→ SNS開発の[プロジェクトセットアップ](../sns/project_setup.html)）を想定しています
+- `on.push.branches: [main]` + `paths: "frontend/**"` … mainブランチに**フロントエンドのファイルが変更されたとき**だけ起動します。リポジトリは `frontend/` と `backend/` を持つモノレポ構成（→ SNS開発の[プロジェクトセットアップ](../sns/project_setup.html)）を想定しています。ワークフローファイル自身も `paths` に含めているのは、ワークフローを修正したときにも動作確認できるようにするためです（→ [CIパイプライン](../cicd/ci_pipeline.html)で学んだ定石です）
 - `permissions: id-token: write` … **OIDCの必須設定**です。ワークフローに「IDトークンを発行してもらう」許可を与えます。これがないと認証ステップが失敗します。`contents: read` はcheckout用です
 - `pnpm/action-setup@v4` … ランナーにpnpm（バージョン9）をインストールします。`actions/setup-node` より**先に**置くのがポイントで、こうすると次のステップのキャッシュ設定がpnpmを認識できます
-- `actions/setup-node@v4` … Node.js 20を用意し、`cache: pnpm` でpnpmのキャッシュを効かせます（→ [CIパイプライン](../cicd/ci_pipeline.html)と同じ書き方です）
+- `actions/setup-node@v4` … Node.js 20を用意し、`cache: 'pnpm'` でpnpmのキャッシュを効かせます（→ [CIパイプライン](../cicd/ci_pipeline.html)と同じ書き方です）
 - `pnpm install --frozen-lockfile && pnpm run build` … ロックファイルどおりにクリーンインストールしてビルド。成果物が `frontend/dist` にできます
 - `aws-actions/configure-aws-credentials@v4` … 先ほどのシーケンス図の処理（トークン取得 → AssumeRole → 一時認証情報の設定）をすべて行う公式アクションです。`role-to-assume` に引き受けるロールのARNを渡します。**アクセスキーはどこにも書いていません**
 - 最後の2ステップ … [S3 + CloudFront](s3_cloudfront.html)で手で打っていた「sync + invalidation」そのものです。認証済みの状態なので、ローカルと同じコマンドがそのまま動きます
@@ -339,6 +344,7 @@ on:
     branches: [main]
     paths:
       - "backend/**"
+      - ".github/workflows/deploy-api.yml"
 
 permissions:
   id-token: write

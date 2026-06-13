@@ -32,16 +32,16 @@ DMに必要なテーブルは2つです。
 
 ```mermaid
 erDiagram
-    USER ||--o{ CONVERSATION : "userOne として参加"
-    USER ||--o{ CONVERSATION : "userTwo として参加"
-    USER ||--o{ MESSAGE : "送信する"
-    CONVERSATION ||--o{ MESSAGE : "含む"
-    CONVERSATION {
+    User ||--o{ Conversation : "userOne として参加"
+    User ||--o{ Conversation : "userTwo として参加"
+    User ||--o{ Message : "送信する"
+    Conversation ||--o{ Message : "含む"
+    Conversation {
         Int id PK
         Int userOneId FK "小さい方のユーザーID"
         Int userTwoId FK "大きい方のユーザーID"
     }
-    MESSAGE {
+    Message {
         Int id PK
         String content "本文（1000文字まで）"
         Int conversationId FK
@@ -121,12 +121,12 @@ Environment variables loaded from .env
 Prisma schema loaded from prisma/schema.prisma
 Datasource "db": PostgreSQL database "sns", schema "public" at "localhost:5432"
 
-Applying migration `20260612100000_add_conversation_and_message`
+Applying migration `20260612150000_add_conversation_and_message`
 
 The following migration(s) have been created and applied from new schema changes:
 
 migrations/
-  └─ 20260612100000_add_conversation_and_message/
+  └─ 20260612150000_add_conversation_and_message/
     └─ migration.sql
 
 Your database is now in sync with your Prisma schema.
@@ -189,7 +189,7 @@ NestJSのモジュール構成として、RESTのControllerとWebSocketのGatewa
 
 ```bash
 cd backend
-nest g module chat
+pnpm exec nest g module chat
 ```
 
 実行結果の例:
@@ -630,7 +630,6 @@ export type Conversation = {
 ```tsx
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import Layout from '../components/Layout';
 import { apiFetch } from '../lib/apiClient';
 import type { Conversation, Message, User } from '../types';
 
@@ -714,60 +713,58 @@ export default function ChatPage() {
   };
 
   return (
-    <Layout>
-      <div className="chat-layout">
-        <aside className="chat-sidebar">
-          <form onSubmit={startConversation}>
-            <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="ユーザー名"
-            />
-            <button type="submit">会話を開始</button>
-          </form>
-          {error !== '' && <p>{error}</p>}
-          <ul>
-            {conversations.map((c) => (
-              <li key={c.id}>
-                <button onClick={() => setSelected(c)}>
-                  <strong>{c.partner.displayName}</strong>
-                  <br />
-                  <small>{c.lastMessage?.content ?? '（メッセージはまだありません）'}</small>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </aside>
-        <main className="chat-main">
-          {selected === null ? (
-            <p>左の一覧から会話を選ぶか、新しい会話を開始してください。</p>
-          ) : (
-            <>
-              <h2>{selected.partner.displayName} さんとの会話</h2>
-              <div className="chat-messages">
-                {messages.map((m) => (
-                  <div
-                    key={m.id}
-                    className={m.senderId === meId ? 'message message-mine' : 'message'}
-                  >
-                    <p>{m.content}</p>
-                  </div>
-                ))}
-              </div>
-              <form onSubmit={sendMessage}>
-                <input
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder="メッセージを入力"
-                  maxLength={1000}
-                />
-                <button type="submit">送信</button>
-              </form>
-            </>
-          )}
-        </main>
-      </div>
-    </Layout>
+    <div className="chat-layout">
+      <aside className="chat-sidebar">
+        <form onSubmit={startConversation}>
+          <input
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="ユーザー名"
+          />
+          <button type="submit">会話を開始</button>
+        </form>
+        {error !== '' && <p>{error}</p>}
+        <ul>
+          {conversations.map((c) => (
+            <li key={c.id}>
+              <button onClick={() => setSelected(c)}>
+                <strong>{c.partner.displayName}</strong>
+                <br />
+                <small>{c.lastMessage?.content ?? '（メッセージはまだありません）'}</small>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </aside>
+      <main className="chat-main">
+        {selected === null ? (
+          <p>左の一覧から会話を選ぶか、新しい会話を開始してください。</p>
+        ) : (
+          <>
+            <h2>{selected.partner.displayName} さんとの会話</h2>
+            <div className="chat-messages">
+              {messages.map((m) => (
+                <div
+                  key={m.id}
+                  className={m.senderId === meId ? 'message message-mine' : 'message'}
+                >
+                  <p>{m.content}</p>
+                </div>
+              ))}
+            </div>
+            <form onSubmit={sendMessage}>
+              <input
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="メッセージを入力"
+                maxLength={1000}
+              />
+              <button type="submit">送信</button>
+            </form>
+          </>
+        )}
+      </main>
+    </div>
   );
 }
 ```
@@ -840,11 +837,15 @@ import ChatPage from './pages/ChatPage';
 
 // ...既存のルート分岐に追加...
 if (path === '/chat') {
-  return <ChatPage />;
+  return (
+    <Layout>
+      <ChatPage />
+    </Layout>
+  );
 }
 ```
 
-ヘッダー（[投稿機能のページ](./posts.html)で作ったLayout）の「チャット」リンクから`#/chat`へ遷移できるようになります。
+他のページと同じく、ページ自身は`Layout`を含めず**App.tsx側で`Layout`に包みます**。ヘッダー（[投稿機能のページ](./posts.html)で作ったLayout）の「チャット」リンクから`#/chat`へ遷移できるようになります。
 
 ## 動作確認 — 2つのブラウザでリアルタイムを体感する
 

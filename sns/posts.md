@@ -362,7 +362,7 @@ pnpm run start:dev
 ```bash
 curl -s -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"alice@example.com","password":"alicepassword"}'
+  -d '{"email":"alice@example.com","password":"password123"}'
 ```
 
 実行結果の例:
@@ -722,18 +722,18 @@ export function TimelinePage() {
 import { useHashRoute } from './hooks/useHashRoute';
 import { isLoggedIn } from './lib/apiClient';
 import { Layout } from './components/Layout';
-import { RegisterPage } from './pages/RegisterPage';
-import { LoginPage } from './pages/LoginPage';
-import { VerifyEmailPage } from './pages/VerifyEmailPage';
+import RegisterPage from './pages/RegisterPage';
+import LoginPage from './pages/LoginPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 import { TimelinePage } from './pages/TimelinePage';
 
 export default function App() {
-  const { path } = useHashRoute();
+  const { path, navigate } = useHashRoute();
 
   // 未ログインでもアクセスできるページ
-  if (path === '/register') return <RegisterPage />;
-  if (path === '/login') return <LoginPage />;
-  if (path.startsWith('/verify-email')) return <VerifyEmailPage />;
+  if (path === '/register') return <RegisterPage navigate={navigate} />;
+  if (path === '/login') return <LoginPage navigate={navigate} />;
+  if (path.startsWith('/verify-email')) return <VerifyEmailPage path={path} />;
 
   // ここから下はログイン必須
   if (!isLoggedIn()) {
@@ -759,7 +759,8 @@ export default function App() {
 
 **コード解説**
 
-- `useHashRoute()` — `#` 以降のパスを返す自作フックです（→ [ユーザー登録とログイン（JWT認証）](./auth.html)）。
+- `useHashRoute()` — `#` 以降のパスと遷移用の `navigate` を返す自作フックです（→ [ユーザー登録とログイン（JWT認証）](./auth.html)）。
+- import の書き分けに注意してください。`RegisterPage` / `LoginPage` / `VerifyEmailPage` は **default export** で定義したページなので `import RegisterPage from ...` の形で読み込み、それぞれが必要とするprops（`navigate` / `path`）を渡します（→ [ユーザー登録とログイン（JWT認証）](./auth.html)・[メールアドレス確認（SES）](./email_verification.html)）。一方、`Layout` のような部品コンポーネントと、このページで named export として定義した `TimelinePage` は `import { ... }` の形で読み込みます。
 - `isLoggedIn()` — localStorageにトークンがあるかを見るだけの簡易チェックです。トークンが期限切れでも `true` になりますが、その場合は最初のAPI呼び出しが401になり、`apiFetch` がトークンを消してログイン画面へ戻してくれるので問題ありません。
 - 最後の `return` — `#/chat` や `#/settings` など、まだ実装していないパスの受け皿です。[フォローとフォロー中タイムライン](./follow.html) 以降のページで、ここに分岐を増やしていきます。
 

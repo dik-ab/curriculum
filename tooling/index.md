@@ -62,7 +62,7 @@ flowchart LR
 
 ## この章の前提
 
-- [Node.jsのインストール](../environment/node.html)が済んでいること（Node.js 20）と、pnpmが使えること（pnpmの導入は[実践: フルスタックTodoアプリ](../fullstack-todo/setup.html)を参照）
+- [Node.jsのインストール](../environment/node.html)が済んでいること（Node.js 20）と、pnpmが使えること（pnpmの導入は[React基礎のセットアップ](../react/setup.html)を参照）
 - [Viteで作成したReactプロジェクト](../react/setup.html)と[Nest CLIで作成したNestJSプロジェクト](../backend/setup.html)を一度でも作ったことがあること
 
 この章のコマンドは、どちらのプロジェクトでもそのまま試せるように両方の手順を載せています。手元に過去の章で作ったプロジェクトがあれば、それを使って進めてください。

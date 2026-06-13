@@ -653,7 +653,7 @@ export function SettingsPage() {
 
 ### App.tsxにルートを追加
 
-[投稿機能とタイムライン](./posts.html)以降に作ってきた`App.tsx`のページ出し分けに、`#/settings`の分岐を追加します（`Layout`で包む形式は他のページと同じです。自分の`App.tsx`の書き方に合わせてください）。
+[投稿機能とタイムライン](./posts.html)以降に作ってきた`App.tsx`のページ出し分けに、`#/settings`の分岐を追加します（ページ自身は`Layout`を含めず、App.tsx側で`Layout`に包むという形式は他のページと同じです）。
 
 **`frontend/src/App.tsx`（出し分けへの追記イメージ）**
 

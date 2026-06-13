@@ -128,12 +128,12 @@ Environment variables loaded from .env
 Prisma schema loaded from prisma/schema.prisma
 Datasource "db": PostgreSQL database "sns", schema "public" at "localhost:5432"
 
-Applying migration `20260612090000_add_follow`
+Applying migration `20260612140000_add_follow`
 
 The following migration(s) have been created and applied from new schema changes:
 
 migrations/
-  └─ 20260612090000_add_follow/
+  └─ 20260612140000_add_follow/
     └─ migration.sql
 
 Your database is now in sync with your Prisma schema.
@@ -152,15 +152,15 @@ Generated Prisma Client (v5.22.0) to ./node_modules/@prisma/client
 | GET /users/:username | プロフィール + フォロワー数/フォロー数/isFollowing |
 | GET /users/:username/posts | そのユーザーの投稿一覧 |
 | POST /users/:username/follow | フォローする（自分自身は400、二重は409） |
-| DELETE /users/:username/follow | フォローを解除する |
+| DELETE /users/:username/follow | フォローを解除する（フォローしていなければ404、成功は204） |
 
 Nest CLI（→ [NestJSのセットアップ](../backend/setup.html)）で雛形を生成します。
 
 ```bash
 cd backend
-nest g module users
-nest g service users
-nest g controller users
+pnpm exec nest g module users
+pnpm exec nest g service users --no-spec
+pnpm exec nest g controller users --no-spec
 ```
 
 実行結果の例:
@@ -169,10 +169,8 @@ nest g controller users
 CREATE src/users/users.module.ts (82 bytes)
 UPDATE src/app.module.ts (1224 bytes)
 CREATE src/users/users.service.ts (89 bytes)
-CREATE src/users/users.service.spec.ts (453 bytes)
 UPDATE src/users/users.module.ts (159 bytes)
 CREATE src/users/users.controller.ts (97 bytes)
-CREATE src/users/users.controller.spec.ts (478 bytes)
 UPDATE src/users/users.module.ts (241 bytes)
 ```
 
@@ -189,6 +187,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 const authorSelect = {
@@ -258,17 +257,19 @@ export class UsersService {
     if (followee.id === followerId) {
       throw new BadRequestException('自分自身はフォローできません');
     }
-    const existing = await this.prisma.follow.findUnique({
-      where: {
-        followerId_followeeId: { followerId, followeeId: followee.id },
-      },
-    });
-    if (existing !== null) {
-      throw new ConflictException('すでにフォローしています');
+    try {
+      await this.prisma.follow.create({
+        data: { followerId, followeeId: followee.id },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('すでにフォローしています');
+      }
+      throw error;
     }
-    await this.prisma.follow.create({
-      data: { followerId, followeeId: followee.id },
-    });
     return { following: true };
   }
 
@@ -277,9 +278,21 @@ export class UsersService {
     if (followee === null) {
       throw new NotFoundException('ユーザーが見つかりません');
     }
-    await this.prisma.follow.deleteMany({
-      where: { followerId, followeeId: followee.id },
-    });
+    try {
+      await this.prisma.follow.delete({
+        where: {
+          followerId_followeeId: { followerId, followeeId: followee.id },
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        throw new NotFoundException('フォローしていません');
+      }
+      throw error;
+    }
   }
 }
 ```
@@ -291,11 +304,11 @@ export class UsersService {
   - `followers: { where: { followerId: currentUserId } }` — 「このユーザーのフォロワーのうち、followerIdがログイン中ユーザーであるもの」だけを取り出します。1件でもあれば「自分はこの人をフォローしている」ことになるので、`isFollowing: user.followers.length > 0`で判定できます。[いいね機能](./likes.html)の`likedByMe`とまったく同じパターンです。
   - 戻り値は設計どおりの`UserProfile`の形（プロフィール + `followersCount` / `followingCount` / `isFollowing`）に整形します。`passwordHash`や`email`を**含めない**点に注意してください。他人に見せるプロフィールに認証情報を混ぜてはいけません。
 - `findPosts` — まずusernameからユーザーを探し、いなければ`NotFoundException`（404）。投稿の取得と整形は[いいね機能](./likes.html)のPostsService.findAllと同じです（`likeCount`と`likedByMe`を付けてPost型に整形）。
-- `follow` — 3段階のチェックをしてから作成します。
+- `follow` — エラーハンドリングは[いいね機能](./likes.html)で決めた方針にそのまま従います。
   - 相手が存在しない → 404 `NotFoundException`
   - 相手が自分自身 → 400 `BadRequestException`。自分をフォローしてもタイムラインの意味が壊れるだけなので、APIの入力として不正と扱います。
-  - すでにフォロー済み → 409 `ConflictException`。複合主キー`followerId_followeeId`での`findUnique`で存在確認します。[いいね機能](./likes.html)の二重いいねと同じく、「現在の状態と矛盾する操作」には409を返す方針です。
-- `unfollow` — `deleteMany`を使っています。`delete`は対象が存在しないとエラーになりますが、`deleteMany`は0件削除でも正常終了します。「フォローしていない人をアンフォローする」のは結果的に「フォローしていない」状態のままで矛盾がないため、エラーにしない（何度実行しても同じ結果になる）作りにしています。
+  - すでにフォロー済み → 409 `ConflictException`。「先に`findUnique`で確認」せず、**`create`を試みてP2002（一意制約違反）を捕まえて409に変換**します。複合主キー`@@id([followerId, followeeId])`が最後の砦なので、コードもその制約に乗るほうが競合状態（race condition）に強く、クエリも1回少なくて済む——[いいね機能](./likes.html)の二重いいねで学んだとおりです。
+- `unfollow` — こちらも[いいね機能](./likes.html)のunlikeと同じ方針です。複合主キー指定の`delete`を試み、対象の行が存在しないことを示す**P2025を捕まえて404 `NotFoundException`** に変換します。「フォローしていない相手の解除」をエラーにすることで、フロントエンドの不整合に早く気づけます。成功時はControllerの`@HttpCode(204)`により204 No Contentが返ります。
 
 ### UsersController
 
@@ -551,7 +564,7 @@ HTTP/1.1 204 No Content
 [{"id":1,"content":"はじめての投稿です","createdAt":"2026-06-12T08:00:00.000Z","author":{"id":1,"username":"alice","displayName":"アリス","bio":"","avatarUrl":null},"likeCount":0,"likedByMe":false}]
 ```
 
-APIは期待どおりです。
+なお、同じDELETEをもう一度送ると、今度はフォローしていない状態なので404（`{"message":"フォローしていません",...}`）が返ります。[いいね機能](./likes.html)の解除と同じ方針です。APIは期待どおりです。
 
 ## フロントエンド — プロフィールページとタブ切り替え
 
@@ -581,11 +594,10 @@ export type UserProfile = User & {
 
 ```tsx
 import { useEffect, useState } from 'react';
-import Layout from '../components/Layout';
-import PostCard from '../components/PostCard';
+import { PostCard } from '../components/PostCard';
 import { useHashRoute } from '../hooks/useHashRoute';
 import { apiFetch } from '../lib/apiClient';
-import type { Post, UserProfile } from '../types';
+import type { Post, User, UserProfile } from '../types';
 
 export default function UserPage() {
   const { path } = useHashRoute();
@@ -593,6 +605,7 @@ export default function UserPage() {
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [me, setMe] = useState<User | null>(null);
   const [error, setError] = useState('');
 
   const load = async () => {
@@ -610,6 +623,12 @@ export default function UserPage() {
   };
 
   useEffect(() => {
+    apiFetch<User>('/auth/me')
+      .then(setMe)
+      .catch(() => setMe(null));
+  }, []);
+
+  useEffect(() => {
     load();
   }, [username]);
 
@@ -625,16 +644,37 @@ export default function UserPage() {
     }
   };
 
+  const handleDelete = async (postId: number) => {
+    if (!confirm('この投稿を削除しますか？')) {
+      return;
+    }
+    try {
+      await apiFetch(`/posts/${postId}`, { method: 'DELETE' });
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '削除に失敗しました');
+    }
+  };
+
+  const handleToggleLike = async (post: Post) => {
+    try {
+      if (post.likedByMe) {
+        await apiFetch(`/posts/${post.id}/likes`, { method: 'DELETE' });
+      } else {
+        await apiFetch(`/posts/${post.id}/likes`, { method: 'POST' });
+      }
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'いいねの操作に失敗しました');
+    }
+  };
+
   if (profile === null) {
-    return (
-      <Layout>
-        <p>{error !== '' ? error : '読み込み中...'}</p>
-      </Layout>
-    );
+    return <p>{error !== '' ? error : '読み込み中...'}</p>;
   }
 
   return (
-    <Layout>
+    <>
       {error !== '' && <p>{error}</p>}
       <section>
         <h2>{profile.displayName}</h2>
@@ -652,10 +692,16 @@ export default function UserPage() {
         <h3>投稿</h3>
         {posts.length === 0 && <p>まだ投稿がありません。</p>}
         {posts.map((post) => (
-          <PostCard key={post.id} post={post} onChanged={load} />
+          <PostCard
+            key={post.id}
+            post={post}
+            currentUserId={me?.id ?? null}
+            onDelete={handleDelete}
+            onToggleLike={handleToggleLike}
+          />
         ))}
       </section>
-    </Layout>
+    </>
   );
 }
 ```
@@ -666,6 +712,8 @@ export default function UserPage() {
 - `load` — プロフィールと投稿一覧を`Promise.all`で**並行に**取得します。2つのリクエストに依存関係はないので、直列に`await`するより速く済みます（→ [fetchでAPI通信](../react/api_fetch.html)）。
 - `useEffect(() => { load(); }, [username])` — 依存配列に`username`を入れているのがポイントです。ユーザーページから別のユーザーページへ（例えば投稿一覧の著者リンクで）遷移したとき、コンポーネントは同じでも`username`が変わるため、再取得が走ります（→ [useEffectと依存配列](../react/hooks.html)）。
 - `toggleFollow` — `isFollowing`の値に応じてPOSTとDELETEを使い分け、成功したら`load()`で再取得します。サーバー上の最新の数字（フォロワー数）を画面に反映するためです。
+- `me`の取得と`handleDelete` / `handleToggleLike` — `PostCard`は`post`・`currentUserId`・`onDelete`・`onToggleLike`の4つのpropsを取るので（→ [投稿機能](./posts.html)・[いいね機能](./likes.html)）、TimelinePageと同じものをこのページにも用意します。`currentUserId`は削除ボタンの出し分けに使われ、削除・いいねの成功後は`load()`でこのページの一覧を取得し直します。
+- このページ自身は`Layout`を含めません。[投稿機能](./posts.html)のTimelinePageと同じく、**LayoutはApp.tsx側で包む**方針で統一します。
 - ローディング中とエラー時の出し分けは[fetchでAPI通信](../react/api_fetch.html)で学んだ定番パターンです。自分自身のページでボタンを押すとAPIが400を返し、そのメッセージが表示されます。「自分のページではボタン自体を隠す」改良は、[総仕上げ](./wrap_up.html)の課題として取り組んでみてください。
 
 ### App.tsxにルートを追加
@@ -677,11 +725,15 @@ import UserPage from './pages/UserPage';
 
 // ...既存のルート分岐に追加...
 if (path.startsWith('/users/')) {
-  return <UserPage />;
+  return (
+    <Layout>
+      <UserPage />
+    </Layout>
+  );
 }
 ```
 
-`/users/alice`のようにusername部分が可変なので、完全一致ではなく`startsWith`で判定します。
+`/users/alice`のようにusername部分が可変なので、完全一致ではなく`startsWith`で判定します。TimelinePageと同じく、`Layout`で包むのはApp.tsx側です（UserPageはdefault exportなので、importは波かっこなしで書きます）。
 
 ### PostCardの著者名をリンクにする
 
@@ -704,60 +756,108 @@ if (path.startsWith('/users/')) {
 **`frontend/src/pages/TimelinePage.tsx`**（書き換え後の全体）
 
 ```tsx
-import { useEffect, useState } from 'react';
-import Layout from '../components/Layout';
-import PostCard from '../components/PostCard';
+import { FormEvent, useEffect, useState } from 'react';
 import { apiFetch } from '../lib/apiClient';
-import type { Post } from '../types';
+import { Post, User } from '../types';
+import { PostCard } from '../components/PostCard';
 
 type Tab = 'all' | 'following';
 
 export default function TimelinePage() {
   const [tab, setTab] = useState<Tab>('all');
   const [posts, setPosts] = useState<Post[]>([]);
+  const [me, setMe] = useState<User | null>(null);
   const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const load = async () => {
+  const loadPosts = async () => {
     try {
       const url = tab === 'all' ? '/posts' : '/posts/timeline';
-      setPosts(await apiFetch<Post[]>(url));
+      const data = await apiFetch<Post[]>(url);
+      setPosts(data);
       setError('');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'エラーが発生しました');
+      setError(e instanceof Error ? e.message : '読み込みに失敗しました');
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    load();
+    apiFetch<User>('/auth/me')
+      .then(setMe)
+      .catch(() => setMe(null));
+  }, []);
+
+  useEffect(() => {
+    loadPosts();
   }, [tab]);
 
-  const submit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (content.trim() === '') return;
+    if (content.trim() === '') {
+      return;
+    }
     try {
       await apiFetch('/posts', {
         method: 'POST',
         body: JSON.stringify({ content }),
       });
       setContent('');
-      await load();
+      await loadPosts();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'エラーが発生しました');
+      setError(e instanceof Error ? e.message : '投稿に失敗しました');
     }
   };
 
+  const handleDelete = async (postId: number) => {
+    if (!confirm('この投稿を削除しますか？')) {
+      return;
+    }
+    try {
+      await apiFetch(`/posts/${postId}`, { method: 'DELETE' });
+      await loadPosts();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '削除に失敗しました');
+    }
+  };
+
+  const handleToggleLike = async (post: Post) => {
+    try {
+      if (post.likedByMe) {
+        await apiFetch(`/posts/${post.id}/likes`, { method: 'DELETE' });
+      } else {
+        await apiFetch(`/posts/${post.id}/likes`, { method: 'POST' });
+      }
+      await loadPosts();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'いいねの操作に失敗しました');
+    }
+  };
+
+  if (loading) {
+    return <p>読み込み中...</p>;
+  }
+
   return (
-    <Layout>
-      <form onSubmit={submit}>
+    <div className="timeline">
+      <form className="post-form" onSubmit={handleSubmit}>
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="いまどうしてる？（280文字まで）"
           maxLength={280}
+          rows={3}
+          placeholder="いまどうしてる？"
         />
-        <button type="submit">投稿する</button>
+        <div className="post-form-footer">
+          <span className="char-count">{content.length}/280</span>
+          <button type="submit" disabled={content.trim() === ''}>
+            投稿する
+          </button>
+        </div>
       </form>
+
       <div>
         <button onClick={() => setTab('all')} disabled={tab === 'all'}>
           全体
@@ -769,24 +869,46 @@ export default function TimelinePage() {
           フォロー中
         </button>
       </div>
-      {error !== '' && <p>{error}</p>}
-      {posts.length === 0 && tab === 'following' && (
-        <p>フォロー中のユーザーの投稿がまだありません。</p>
+
+      {error && <p className="error">{error}</p>}
+
+      {posts.length === 0 ? (
+        <p>
+          {tab === 'following'
+            ? 'フォロー中のユーザーの投稿がまだありません。'
+            : 'まだ投稿がありません。最初の投稿をしてみましょう。'}
+        </p>
+      ) : (
+        posts.map((post) => (
+          <PostCard
+            key={post.id}
+            post={post}
+            currentUserId={me?.id ?? null}
+            onDelete={handleDelete}
+            onToggleLike={handleToggleLike}
+          />
+        ))
       )}
-      {posts.map((post) => (
-        <PostCard key={post.id} post={post} onChanged={load} />
-      ))}
-    </Layout>
+    </div>
   );
 }
 ```
 
 **コード解説**
 
-- 投稿フォームとPostCardの部分は[投稿機能](./posts.html)・[いいね機能](./likes.html)で作ったままです。今回の追加点はタブだけです。
+- 投稿フォーム・`me`の取得・`handleSubmit` / `handleDelete` / `handleToggleLike`は[投稿機能](./posts.html)・[いいね機能](./likes.html)で作ったままです。今回の追加点はタブだけです。
 - `const [tab, setTab] = useState<Tab>('all');` — 現在のタブをstateで管理します。`'all' | 'following'`のユニオン型（→ [TypeScriptの基本型](../typescript/basic_types.html)）にしておくと、タイプミスをコンパイル時に検出できます。
-- `useEffect(() => { load(); }, [tab])` — 依存配列に`tab`を入れているので、タブを切り替えるたびに再取得が走ります。`load`の中で`tab`に応じてURLを`/posts`と`/posts/timeline`で切り替えます。レスポンスの形は両方とも同じ`Post[]`なので、表示側のコードは一切変わりません。バックエンドでレスポンスの形を揃えた効果がここに出ています。
+- `useEffect(() => { loadPosts(); }, [tab])` — 依存配列に`tab`を入れているので、タブを切り替えるたびに再取得が走ります。`loadPosts`の中で`tab`に応じてURLを`/posts`と`/posts/timeline`で切り替えます。レスポンスの形は両方とも同じ`Post[]`なので、表示側のコードは一切変わりません。バックエンドでレスポンスの形を揃えた効果がここに出ています。`me`の取得（`/auth/me`）はタブに関係なく1回でよいため、依存配列`[]`の別のuseEffectに分けました。
 - `disabled={tab === 'all'}` — 選択中のタブのボタンを無効化して、現在地をわかりやすくしています。
+- ページ自身は`Layout`を含めず、App.tsx側で包む構成は[投稿機能](./posts.html)のままです。
+- **1点だけApp.tsxの修正が必要です。** [投稿機能](./posts.html)の初版では`export function TimelinePage()`（named export）として定義していましたが、今回の書き換えで他のページ（RegisterPageやUserPageなど）と同じ**default export**に揃えました。App.tsxのimportを次のように変更してください。
+
+```tsx
+// 変更前
+import { TimelinePage } from './pages/TimelinePage';
+// 変更後
+import TimelinePage from './pages/TimelinePage';
+```
 
 ## 動作確認（画面）
 

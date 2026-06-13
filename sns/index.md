@@ -345,10 +345,10 @@ sns-app/
 ├── backend/              # NestJS 10 + Prisma 5（http://localhost:3000）
 ├── frontend/             # Vite 5 + React 18 + TypeScript（http://localhost:5173）
 ├── infra/                # AWS CDK（deploy のページで作成）
-└── .github/workflows/    # CI/CD（deploy のページで作成）
+└── .github/workflows/    # CI/CD（ci.yml はCI/CDの章で作成済み、デプロイ用は deploy のページで作成）
 ```
 
-フロントエンド・バックエンド・インフラを1つのリポジトリに同居させる構成を**モノレポ（monorepo、単一リポジトリ）**と呼びます。採用する理由は[プロジェクトセットアップ](./project_setup.html)で説明します。
+CIのワークフロー（`ci.yml`）は[CIパイプラインを作る](../cicd/ci_pipeline.html)の手順で作成済みのものを流用し、デプロイ用のワークフローは[AWSへの全体デプロイ](./deploy.html)で作成します。フロントエンド・バックエンド・インフラを1つのリポジトリに同居させる構成を**モノレポ（monorepo、単一リポジトリ）**と呼びます。採用する理由は[プロジェクトセットアップ](./project_setup.html)で説明します。
 
 ### ページの順番
 

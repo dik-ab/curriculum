@@ -36,7 +36,7 @@ Claude APIは、Anthropic社が提供する、ClaudeをプログラムからHTTP
 
 ### APIキーの取得
 
-1. [Anthropic Console](https://console.anthropic.com/)にアクセスし、アカウントを作成します
+1. [Anthropic Console](https://console.anthropic.com/)（現在は platform.claude.com に統合されており、リダイレクトされます）にアクセスし、アカウントを作成します
 2. 支払い方法を設定し、クレジット（利用枠）を購入します（最小額でかまいません）
 3. 「API Keys」のページで「Create Key」をクリックし、キーを作成します
 4. 表示された`sk-ant-`で始まる文字列がAPIキーです。**この画面でしか表示されないので、安全な場所に控えてください**
@@ -145,7 +145,7 @@ Packages: +12
 Progress: resolved 12, reused 0, downloaded 12, added 12, done
 
 dependencies:
-+ @anthropic-ai/sdk 0.39.0
++ @anthropic-ai/sdk 0.91.0
 + dotenv 16.4.5
 ```
 

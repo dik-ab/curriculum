@@ -18,7 +18,7 @@ nav_order: 10
 > - **RDS** … インスタンスが起動している間ずっと課金されます（無料枠は条件付き・期間限定）
 > - **ALB** … 起動時間に対して課金されます（1時間あたり数円 + 処理量）
 > - **ECS Fargate** … タスクが動いている間、vCPUとメモリに対して秒単位で課金されます
-> - **NAT Gateway** … 起動時間 + 処理データ量に課金されます。**置いておくだけで1日100円規模**になる、見落としやすい代表格です
+> - **NAT Gateway** … 起動時間 + 処理データ量に課金されます。**置いておくだけで1日200円強（月6,000円規模）**になる、見落としやすい代表格です（→ [ECR + ECS Fargate](../aws/ecr_ecs.html)）
 >
 > 合計すると、この構成を放置した場合**1日あたり数百円規模**の課金が発生し得ます。練習が終わったら、ページ末尾の手順で**必ず `cdk destroy` を実行して削除**してください。また、作業を始める前に、[AWSとは何か](../aws/what_is_aws.html)で設定した**予算アラート**が有効になっていることをもう一度確認してください。
 
@@ -319,7 +319,7 @@ export class SnsAppStack extends cdk.Stack {
 
 - `engine: ...postgres({ version: ...VER_16 })` … 開発環境（composeの `postgres:16`）と同じPostgreSQL 16を指定します。**開発と本番でDBのバージョンを揃える**のは事故を防ぐ基本です
 - `instanceType: T4G, MICRO` … 最小クラスのインスタンスです。それでも**起動している間は課金され続けます**
-- `vpcSubnets: PRIVATE_WITH_EGRESS` … DBはインターネットから直接届かないプライベートサブネットに置きます（→ [RDS](../aws/rds.html)で学んだセキュリティの基本）
+- `vpcSubnets: PRIVATE_WITH_EGRESS` … DBはインターネットから直接届かないプライベートサブネットに置きます（→ [RDS](../aws/rds.html)で学んだセキュリティの基本）。なお[AWS章](../aws/rds.html)では、外向き通信も遮断した`PRIVATE_ISOLATED`を使いました。DB自体に外向きの通信は不要なので本来はISOLATEDでも構いませんが、今回のVPCはECSタスク用に`natGateways: 1`の既定構成（パブリック + `PRIVATE_WITH_EGRESS`の2種類のサブネット）で作っており、ISOLATEDサブネットが存在しないため、ここでは`PRIVATE_WITH_EGRESS`に置いています。`subnetConfiguration`でISOLATEDサブネットを追加してDBをそちらに隔離する構成は、発展課題として試してみてください
 - `databaseName: 'sns'` … インスタンス作成時に `sns` データベースを作ります。Prismaの接続先になります
 - パスワードを書いていない点に注目してください。指定しなければ、CDKが**Secrets Managerに自動生成のパスワードを保存**します（ユーザー名は `postgres`）。コードにもGitにもパスワードが残らない仕組みです
 - `removalPolicy: DESTROY` / `deletionProtection: false` … 学習用に「destroyで確実に消える」設定です。本番の業務システムでは逆の設定にします
@@ -648,7 +648,37 @@ upload: dist/assets/index-BX3kVQzN.js to s3://...
 
 ## GitHub Actionsで自動デプロイ
 
-ここまでのデプロイは手作業（build → push → sync → invalidation）でした。これを「mainブランチにpushしたら自動で本番に反映」に進化させます。[CI/CDから自動デプロイ](../aws/deploy_from_cicd.html)で作った**OIDCのIAMロールをそのまま再利用**します（パスワードレスでGitHub ActionsがAWSを操作できる仕組みでした。ロールの権限に、今回作ったバケット・ECRリポジトリ・ECSサービスへの操作が含まれているかは確認してください）。
+ここまでのデプロイは手作業（build → push → sync → invalidation）でした。これを「mainブランチにpushしたら自動で本番に反映」に進化させます。認証には、[CI/CDから自動デプロイ](../aws/deploy_from_cicd.html)で学んだ**OIDCの仕組み**（パスワードレスでGitHub ActionsがAWSを操作できる仕組み）をそのまま使います。
+
+ただし、**あの章で作ったCicdStackのIAMロールを、そのまま使い回すことはできません**。あのロールの権限は`grantReadWrite`などのgrantメソッドで**aws章のリソース（FrontendStackのバケット・EcrStackの`sns-api`リポジトリ・そのDistribution）に限定**されています。最小権限の原則どおりの良い設計ですが、その裏返しとして、今回の`SnsAppStack`のバケットや`sns-backend`リポジトリを操作しようとすると**AccessDenied**になります。対処は次のどちらかです。
+
+1. **SNS用のリソースを参照するCicdStackを新たに定義する（aws章のスタックを削除済みの人はこちら）** — `sns-app/infra/lib/cicd-stack.ts`に、[CI/CDから自動デプロイ](../aws/deploy_from_cicd.html)のCicdStackと同じ構成のスタックを作り、grantの対象だけを今回のリソースに差し替えます。方針は次のとおりです（OIDCプロバイダとロールの定義・信頼条件はaws章のコードと同じです）。
+
+   ```typescript
+   // lib/cicd-stack.ts（権限付与の部分だけ。スタックの骨格はaws章のCicdStackと同じ）
+   props.frontendBucket.grantReadWrite(deployRole); // SnsAppStackのフロント用バケット
+   props.repository.grantPullPush(deployRole);      // ECRのsns-backendリポジトリ
+   deployRole.addToPolicy(
+     new iam.PolicyStatement({
+       actions: ['cloudfront:CreateInvalidation'],
+       resources: [
+         `arn:aws:cloudfront::${this.account}:distribution/${props.distribution.distributionId}`,
+       ],
+     }),
+   );
+   deployRole.addToPolicy(
+     new iam.PolicyStatement({
+       actions: ['ecs:UpdateService', 'ecs:DescribeServices'],
+       resources: ['*'],
+     }),
+   );
+   ```
+
+   SnsAppStackのバケット・Distributionを公開プロパティにして渡す方法も、aws章で`FrontendStack`に対して行った変更と同じです。なお、OIDCプロバイダはアカウントに1つしか作れないため、aws章のCicdStackが残っている場合は`iam.OpenIdConnectProvider.fromOpenIdConnectProviderArn(...)`で既存のものを参照してください。
+
+2. **既存ロールのポリシーにSNSのリソースを追加する（aws章のCicdStackを残している人はこちら）** — aws章の`cicd-stack.ts`に、今回のバケット・`sns-backend`リポジトリ・Distributionへの許可を上と同じ要領で追記し、`cdk deploy CicdStack`で更新します。
+
+どちらの場合も、出力されたロールARN（`DeployRoleArn`）を次の節でGitHubのVariablesに設定します。
 
 全体の流れをシーケンス図で確認します。
 
@@ -678,16 +708,16 @@ sequenceDiagram
 
 pushを受けたGitHub Actionsが、まずテストを実行し、合格したらOIDCで一時的な認証情報を取得して、バックエンド（ECR/ECS）とフロントエンド（S3/CloudFront）を並行してデプロイします。**テストに落ちたらデプロイされない**——[CI/CDとは何か](../cicd/what_is_cicd.html)で学んだ「壊れたものを本番に出さない仕組み」です。
 
-### シークレットを登録する
+### Variablesを登録・更新する
 
-ワークフローから参照する値を、リポジトリのSecretsに登録します（GitHubのリポジトリ → Settings → Secrets and variables → Actions。→ [CI/CDから自動デプロイ](../aws/deploy_from_cicd.html)と同じ手順です）。
+ワークフローから参照する値を、リポジトリの**Variables**に登録します（GitHubのリポジトリ → Settings → Secrets and variables → Actions → Variables。→ [CI/CDから自動デプロイ](../aws/deploy_from_cicd.html)と同じ手順・同じ変数名です）。aws章で登録済みの変数は、値を今回のSnsAppStackの出力に**更新**してください。いずれも秘密情報ではないため、SecretsではなくVariablesで構いません。
 
-| シークレット名 | 値 |
+| 変数名 | 値 |
 |---|---|
-| `AWS_DEPLOY_ROLE_ARN` | OIDC用IAMロールのARN（[CI/CDから自動デプロイ](../aws/deploy_from_cicd.html)で作成したもの） |
-| `VITE_API_URL` | `ApiUrl` の出力値（ALBのURL） |
-| `FRONTEND_BUCKET` | `FrontendBucketName` の出力値 |
-| `DISTRIBUTION_ID` | `DistributionId` の出力値 |
+| `AWS_DEPLOY_ROLE` | OIDC用IAMロールのARN（前節で用意したロールの `DeployRoleArn`） |
+| `VITE_API_URL` | `ApiUrl` の出力値（ALBのURL。新規追加） |
+| `FRONTEND_BUCKET` | `FrontendBucketName` の出力値（SnsAppStackの値に更新） |
+| `DISTRIBUTION_ID` | `DistributionId` の出力値（SnsAppStackの値に更新） |
 
 ### ワークフローを書く
 
@@ -735,7 +765,7 @@ jobs:
 
 - `on: push: branches: [main]` … mainブランチへのpush（PRのマージを含む）だけで起動します（→ [GitHub Actions基礎](../cicd/github_actions_basics.html)）
 - `permissions: id-token: write` … OIDCトークンの発行をワークフローに許可します。**OIDC認証に必須**の1行でした（→ [CI/CDから自動デプロイ](../aws/deploy_from_cicd.html)）
-- `test` ジョブ … [CIパイプラインを作る](../cicd/ci_pipeline.html)で組んだlint + test + buildと同じ内容です。ここではDB不要の単体テストまでを回しています。E2Eテスト（テスト用DBが必要）も含めたい場合は、同ページで使ったservice container構成をこのジョブに足してください
+- `test` ジョブ … [CIパイプラインを作る](../cicd/ci_pipeline.html)で組んだlint + test + buildと同じ内容です。ここではDB不要の単体テストまでを回しています。E2Eテスト（テスト用DBが必要）も含めたい場合は、[SNSのテストを書く](./testing.html)でCIの`backend`ジョブに足したservice container構成をこのジョブにも足してください
 - `pnpm/action-setup@v4` + `cache: pnpm` … ランナーにpnpm（バージョン9）をインストールし、依存のキャッシュで2回目以降の実行を速くします。`actions/setup-node` より**先に**置くのがポイントでした（→ [CI/CDから自動デプロイ](../aws/deploy_from_cicd.html)と同じ書き方です）
 
 次に、フロントエンドのデプロイジョブを追記します。
@@ -762,15 +792,15 @@ jobs:
       - run: pnpm run build
         working-directory: frontend
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
-      - run: aws s3 sync frontend/dist "s3://${{ secrets.FRONTEND_BUCKET }}" --delete
+      - run: aws s3 sync frontend/dist "s3://${{ vars.FRONTEND_BUCKET }}" --delete
       - run: >
           aws cloudfront create-invalidation
-          --distribution-id ${{ secrets.DISTRIBUTION_ID }}
+          --distribution-id ${{ vars.DISTRIBUTION_ID }}
           --paths "/*"
 ```
 {% endraw %}
@@ -795,7 +825,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
       - name: Log in to ECR
         id: ecr

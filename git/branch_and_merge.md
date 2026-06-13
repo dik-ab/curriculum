@@ -139,7 +139,7 @@ git merge add-usage
 実行結果の例:
 
 ```
-Updating f4e5d6c..9a8b7c6
+Updating b7c8d9e..9a8b7c6
 Fast-forward
  README.md | 4 ++++
  1 file changed, 4 insertions(+)

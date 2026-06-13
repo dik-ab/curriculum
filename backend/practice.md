@@ -191,12 +191,12 @@ flowchart TD
 **手順の全体**
 
 ```bash
-nest new bookmark-api        # パッケージマネージャはpnpmを選択
+pnpm dlx @nestjs/cli@10 new bookmark-api   # パッケージマネージャはpnpmを選択
 cd bookmark-api
 pnpm add class-validator class-transformer
-nest g module bookmarks
-nest g controller bookmarks
-nest g service bookmarks
+pnpm exec nest g module bookmarks
+pnpm exec nest g controller bookmarks
+pnpm exec nest g service bookmarks
 ```
 
 **`src/main.ts`** — ValidationPipeを有効化します。
@@ -405,7 +405,7 @@ curl -i -X DELETE http://localhost:3000/bookmarks/1
 セクション全体の到達度を確認しましょう。
 
 - [ ] RESTの設計表（メソッド・パス・ステータスコード）を、題材を与えられたら自力で書ける
-- [ ] `nest new`から動くAPIまでの手順を、資料を見ずに再現できる
+- [ ] プロジェクト作成から動くAPIまでの手順を、資料を見ずに再現できる
 - [ ] Module / Controller / Service / DTOの役割と関係を図で描ける
 - [ ] DIの仕組みと利点を自分の言葉で説明できる
 - [ ] `@Param` / `@Query` / `@Body`とPipeによる検証を正しく使い分けられる

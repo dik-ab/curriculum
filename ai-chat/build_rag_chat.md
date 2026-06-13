@@ -78,8 +78,8 @@ flowchart LR
 nest new rag-chat-api
 cd rag-chat-api
 pnpm add @anthropic-ai/sdk @nestjs/config class-validator class-transformer dotenv
-pnpm add -D prisma
-pnpm add @prisma/client
+pnpm add -D prisma@5
+pnpm add @prisma/client@5
 ```
 
 **コード解説**

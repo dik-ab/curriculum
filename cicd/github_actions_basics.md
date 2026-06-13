@@ -290,6 +290,10 @@ jobs:
           ruby-version: '3.3'
           bundler-cache: true
 
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
       - name: Build with Jekyll
         run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
 
@@ -310,9 +314,10 @@ jobs:
 
 - `on.push.branches: ["main"]` — mainブランチへのpush（＝教材の更新）で起動します。`workflow_dispatch` もあるので手動再実行も可能です
 - `build` ジョブ — `actions/checkout` でコードを取得し、`ruby/setup-ruby` でRubyを準備します。このサイトはJekyll（ジキル）というRuby製のツールでMarkdownをHTMLに変換しているため、Node.jsではなくRubyをセットアップしています。`setup-node` と発想は同じで、「言語ランタイムを準備するアクション」が言語ごとにある、という例です
-- `run: bundle exec jekyll build ...` — サイトをビルド（Markdown→HTML変換）します。{% raw %}`${{ ... }}`{% endraw %} は変数を埋め込むGitHub Actionsの記法です
+- `actions/configure-pages` — GitHub Pagesの設定（公開URLのパスなど）を取得するアクションです。`id: pages` という名前を付けてあるので、次のステップから出力を参照できます
+- `run: bundle exec jekyll build ...` — サイトをビルド（Markdown→HTML変換）します。{% raw %}`${{ ... }}`{% endraw %} は変数を埋め込むGitHub Actionsの記法で、ここでは直前の `Setup Pages` ステップ（`id: pages`）の出力 `base_path` を埋め込んでいます
 - `needs: build` — `deploy` ジョブは `build` ジョブの**成功を待ってから**実行する、という依存関係の指定です。ジョブは通常並列ですが、`needs` で順序を付けられます
-- `deploy` ジョブ — ビルド成果物をGitHub Pages（GitHubの静的サイト公開サービス）へデプロイします
+- `deploy` ジョブ — ビルド成果物をGitHub Pages（GitHubの静的サイト公開サービス）へデプロイします。なお実ファイルには、デプロイに必要な権限設定（`permissions`）や環境の指定（`environment`）もあります（抜粋では省略）
 
 つまりこのワークフローは、「**mainにpush → ビルド → 成功したらデプロイ**」という、前ページのシーケンス図そのものです。`build` と `deploy` の2ジョブ構成の意味は、[ビルドとデプロイの流れ](build_and_deploy_flow.html)で改めて掘り下げます。
 

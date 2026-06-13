@@ -192,7 +192,7 @@ export default App;
 **ポイント**
 
 - `setSeconds((prev) => prev + 1)` — set関数には「前の値を受け取って新しい値を返す関数」も渡せます。useEffect内のように「最新のstateが手元にない」場面では、この**更新関数形式**が安全です（`setSeconds(seconds + 1)` だと、依存配列が `[]` のため `seconds` が初期値0のまま固定され、1で止まってしまいます）
-- `{visible && <Timer />}` で非表示にすると `Timer` はアンマウントされ、クリーンアップが実行されます。クリーンアップを消してみると、非表示後にコンソールへ警告が出ることも確認できます（[フック（useEffect）](hooks.html)）
+- `{visible && <Timer />}` で非表示にすると `Timer` はアンマウントされ、クリーンアップが実行されます。クリーンアップを消すとタイマーが動き続けることは、intervalのコールバックに `console.log` を仕込み、非表示にした後もコンソールへ出力が続くことで確認できます（[フック（useEffect）](hooks.html)）
 
 </details>
 

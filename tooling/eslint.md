@@ -93,7 +93,7 @@ flowchart TB
 
 ```typescript
 const unusedValue = 123;
-console.log(undefinedVariable);
+const unusedMessage = 'まだどこでも使っていない';
 ```
 
 実行します。
@@ -106,8 +106,8 @@ pnpm run lint
 
 ```
 /Users/taro/my-react-app/src/App.tsx
-  1:7  error  'unusedValue' is assigned a value but never used  @typescript-eslint/no-unused-vars
-  2:13 error  'undefinedVariable' is not defined                no-undef
+  1:7  error  'unusedValue' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  2:7  error  'unusedMessage' is assigned a value but never used  @typescript-eslint/no-unused-vars
 
 ✖ 2 problems (2 errors, 0 warnings)
 ```

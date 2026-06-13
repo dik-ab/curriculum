@@ -31,8 +31,10 @@ sns-app/
 ├── backend/              # NestJS 10 + Prisma 5（このページで作成）
 ├── frontend/             # Vite 5 + React 18 + TypeScript（このページで作成）
 ├── infra/                # AWS CDK（deploy のページで作成）
-└── .github/workflows/    # CI/CD（deploy のページで作成）
+└── .github/workflows/    # CI/CD（ci.yml はCI/CDの章で作成済みのものを流用、デプロイ用は deploy のページで作成）
 ```
+
+CIのワークフロー（`ci.yml`）は、[CIパイプラインを作る](../cicd/ci_pipeline.html)の手順で作成済みのものをこのリポジトリでもそのまま使います（まだ作っていない場合は、同ページの手順でいつでも追加できます）。デプロイ用のワークフローは[AWSへの全体デプロイ](./deploy.html)で作成します。
 
 リポジトリを分ける方式（フロント用・バック用で別リポジトリ）もありますが、今回モノレポを選ぶ理由は次の通りです。
 
@@ -296,8 +298,8 @@ bootstrap();
 データベースを操作するPrismaを導入します。手順は[Prisma導入](../database/prisma_setup.html)で学んだ通りです。
 
 ```bash
-pnpm add -D prisma
-pnpm add @prisma/client
+pnpm add -D prisma@5
+pnpm add @prisma/client@5
 pnpm exec prisma init
 ```
 

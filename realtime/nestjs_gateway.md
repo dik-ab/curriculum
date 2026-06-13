@@ -220,7 +220,7 @@ pnpm run start:dev
 別のターミナルを開き、Reactのプロジェクトを作ります。[Viteでのプロジェクト作成](../react/setup.html)と同じ手順です。
 
 ```bash
-pnpm create vite chat-client --template react-ts
+pnpm create vite@5 chat-client --template react-ts
 cd chat-client
 pnpm install
 pnpm add socket.io-client
@@ -569,7 +569,7 @@ export default App;
 
 このページで作ったミニチャットは、最終プロジェクトの[SNSのDMチャット](../sns/chat.html)の原型そのものです。DMチャットでは、ここで学んだ知識を次のように発展させます。
 
-- **roomの応用** — 「ユーザー1とユーザー5のDM」を`dm-1-5`のようなルーム名で表現し、当事者2人だけをjoinさせることで1対1チャットを実現します
+- **roomの応用** — 会話ごとにデータベース上のIDを持たせ、`conversation:1`のように会話IDでルーム名を表現し、当事者2人だけをjoinさせることで1対1チャットを実現します
 - **認証との組み合わせ** — 誰でも入室できた今回と違い、JWT（[認証](../sns/auth.html)で学びます）で本人確認をしてから入室を許可します
 - **メッセージの永続化** — 今回のメッセージは画面を更新すると消えますが、DMではPrismaでデータベースに保存し、過去の履歴も表示します
 

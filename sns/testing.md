@@ -41,7 +41,7 @@ graph TB
 
 | メソッド | 検証したい挙動 |
 |---|---|
-| `create(userId, dto)` | ログイン中のユーザーが`authorId`になり、`content`で投稿が作られる |
+| `create(userId, content)` | ログイン中のユーザーが`authorId`になり、`content`で投稿が作られる |
 | `remove(userId, postId)` | 存在しない投稿なら`NotFoundException`（404） |
 | `remove(userId, postId)` | **他人の投稿なら`ForbiddenException`（403）を投げ、削除しない** |
 
@@ -89,7 +89,7 @@ describe('PostsService', () => {
         createdAt: new Date(),
       });
 
-      await service.create(10, { content: 'テスト投稿です' });
+      await service.create(10, 'テスト投稿です');
 
       expect(mockPrisma.post.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -148,7 +148,7 @@ describe('PostsService', () => {
 **コード解説**
 
 - `mockPrisma` — [単体テスト](../testing/unit_test.html)で学んだとおり、PrismaServiceと同じ形（`post`プロパティの中に各メソッド）の偽物を`jest.fn()`で作ります。`{ provide: PrismaService, useValue: mockPrisma }`でDIを差し替えるのも同じです。
-- `expect.objectContaining({...})` — 「少なくともこのプロパティを含む引数で呼ばれた」ことの検証です。あなたの`create`の実装が[いいね機能](./likes.html)の改修で`include`や`select`を付けていても、このテストはそのまま通ります。実装の細部に縛られず**本質（誰の・どんな内容の投稿が作られるか）だけ**を検証する書き方です。
+- `expect.objectContaining({...})` — 「少なくともこのプロパティを含む引数で呼ばれた」ことの検証です。[投稿機能とタイムライン](./posts.html)で実装した`create(authorId, content)`は`data`のほかに`include`（投稿者情報の付与）も渡していますが、このテストはその細部には縛られず、**本質（誰の・どんな内容の投稿が作られるか）だけ**を検証するため、そのまま通ります。
 - `mockResolvedValue(null)` — 「投稿が見つからない」状況を偽装します。DBに細工をしなくても、異常系を自在に作れるのがモックの強みです。
 - `authorId: 99`に対して`service.remove(10, 1)` — 「ユーザー10が、ユーザー99の投稿1を消そうとする」状況です。`rejects.toThrow(ForbiddenException)`で403の例外を検証します（`await`を忘れずに）。
 - `expect(mockPrisma.post.delete).not.toHaveBeenCalled()` — 例外が投げられただけでなく、**deleteが実行されていない**ことまで確認します。「403を返すが消えてしまっている」という最悪のバグを見逃さないためです。
@@ -222,7 +222,7 @@ pnpm add -D dotenv-cli
 }
 ```
 
-テスト用DBにマイグレーションを適用します。`migrate deploy`は既存のマイグレーションファイルをそのまま適用するコマンドでした（→ [マイグレーション](../database/schema_and_migration.html)）。今後スキーマを変えたら、テスト用DBにもこのコマンドで再反映するのを忘れないでください。
+テスト用DBにマイグレーションを適用します。`migrate deploy`は既存のマイグレーションファイルをそのまま適用するコマンドでした（→ [E2Eテスト](../testing/e2e_test.html)）。今後スキーマを変えたら、テスト用DBにもこのコマンドで再反映するのを忘れないでください。
 
 ```bash
 pnpm exec dotenv -e .env.test -- prisma migrate deploy
@@ -372,7 +372,7 @@ describe('Follow API (e2e)', () => {
     await request(app.getHttpServer())
       .delete('/users/bob/follow')
       .set('Authorization', `Bearer ${aliceToken}`)
-      .expect(200);
+      .expect(204);
 
     const res = await request(app.getHttpServer())
       .get('/posts/timeline')
@@ -393,7 +393,7 @@ describe('Follow API (e2e)', () => {
 - `emailVerified: true` — [メールアドレス確認（SES）](./email_verification.html)で「未確認のユーザーはログインできない（403）」仕様にしたため、テストユーザーは最初から確認済みにしておきます。これを忘れるとログインの段階で全テストが失敗します。
 - `aliceRes.body.accessToken` — `POST /auth/login`のレスポンス`{ accessToken }`からトークンを取り出し、以降のリクエストで`.set('Authorization', \`Bearer ${...}\`)`として付与します。`apiFetch`がフロントエンドでやっていたことを、テストでは手で書いているわけです。
 - 各`it`が、401 → フォロー201 → 二重フォロー409 → プロフィール反映 → タイムライン表示 → 解除で消える、というシナリオを順に進めます。フォローの「数」だけでなく、フォローの**目的であるタイムラインへの反映**まで検証するのがこのテストの価値です。
-- `.delete(...).expect(200)` — NestJSの`@Delete`はデフォルトで200を返します。[フォローとフォロー中タイムライン](./follow.html)で`@HttpCode(204)`を付けた実装にしている場合は、期待値を204に合わせてください。
+- `.delete(...).expect(204)` — [フォローとフォロー中タイムライン](./follow.html)のunfollowには`@HttpCode(204)`を付けたので、成功時は204 No Contentが返ります。もし`@HttpCode`を付けていない場合は、NestJSの`@Delete`はデフォルトで200を返すため、期待値を自分の実装に合わせてください。
 
 ### 実行する
 
@@ -422,14 +422,16 @@ Time:        8.305 s
 
 ## CIで回す
 
-テストは「pushのたびに必ず実行される」ようになって初めて力を発揮します。[CIパイプラインを作る](../cicd/ci_pipeline.html)で作ったSNSのCIに、このページのテストを組み込みましょう。ポイントは、GitHub Actionsの実行環境にはPostgreSQLがないため、**workflowの`services`でPostgreSQLコンテナを起動する**ことです。要点だけ抜粋します（workflowの基本構造は[GitHub Actionsの基礎](../cicd/github_actions_basics.html)を参照してください）。
+テストは「pushのたびに必ず実行される」ようになって初めて力を発揮します。[CIパイプラインを作る](../cicd/ci_pipeline.html)で作ったSNSのCI（`ci.yml`）には、すでに`backend`ジョブがあり、lint → `pnpm run test` → build を実行しています。つまり、このページで書いた**単体テストは、追加の作業なしで既にCIで回っています**。組み込みが必要なのはE2Eテストの方です。
 
-**`.github/workflows/ci.yml`（backendのテストjobの要点）**
+既存の`backend`ジョブに、(1) PostgreSQLのサービスコンテナ、(2) テスト用の環境変数、(3) `prisma migrate deploy`とE2E実行の2ステップ、を追加します（workflowの基本構造は[GitHub Actionsの基礎](../cicd/github_actions_basics.html)を参照してください）。
+
+**`.github/workflows/ci.yml`（既存のbackendジョブへの追記後の要点）**
 
 ```yaml
-  backend-test:
+  backend:
     runs-on: ubuntu-latest
-    services:
+    services:                  # ← 追加
       postgres:
         image: postgres:16
         env:
@@ -446,7 +448,7 @@ Time:        8.305 s
     defaults:
       run:
         working-directory: backend
-    env:
+    env:                       # ← 追加
       DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/sns_test?schema=public"
       JWT_SECRET: "ci-test-secret"
       FRONTEND_URL: "http://localhost:5173"
@@ -461,18 +463,21 @@ Time:        8.305 s
           cache: pnpm
           cache-dependency-path: backend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec prisma migrate deploy
+      - run: pnpm run lint
       - run: pnpm run test
-      - run: pnpm exec jest --config ./test/jest-e2e.json
+      - run: pnpm run build
+      - run: pnpm exec prisma migrate deploy            # ← 追加
+      - run: pnpm exec jest --config ./test/jest-e2e.json # ← 追加
 ```
 
 **コード解説**
 
-- `services: postgres:` — jobの実行中だけ、横でPostgreSQL 16のコンテナが起動します。ローカルのcomposeの役割をCI上で果たすものです。`options`のヘルスチェックで「DBの起動完了を待ってからstepを始める」ようにしています。
+- `services: postgres:` — jobの実行中だけ、横でPostgreSQL 16のコンテナが起動します。ローカルのcomposeの役割をCI上で果たすものです。`options`のヘルスチェックで「DBの起動完了を待ってからstepを始める」ようにしています。E2Eテストを足すまでは不要だったので、ここで初めて追加します。
 - `env:`（jobレベル） — `.env.test`はGitに入れていないので、CIでは**同じ内容をjobの環境変数として直接設定**します。だからE2Eの実行も`pnpm run test:e2e`（dotenv-cli経由）ではなく、`pnpm exec jest --config ./test/jest-e2e.json`でjestを直接起動しています。
-- `pnpm exec prisma migrate deploy` — テストの前に、まっさらなDBへマイグレーションを適用します。ローカルで手順としてやったことが、CIでは毎回自動で行われます。
+- `pnpm exec prisma migrate deploy` — E2Eテストの前に、まっさらなDBへマイグレーションを適用します。ローカルで手順としてやったことが、CIでは毎回自動で行われます。
+- lint・単体テスト・buildのステップは[CIパイプラインを作る](../cicd/ci_pipeline.html)で作ったままです。
 
-このjobを既存のlint・buildのjob（→ [CIパイプラインを作る](../cicd/ci_pipeline.html)）と並べれば、pushのたびに単体テストとE2Eテストが自動で走ります。デプロイのworkflowとの関係は、次のページ[AWSへの全体デプロイ](./deploy.html)で扱います。
+これで、pushのたびに既存のチェックに加えてE2Eテストも自動で走ります。デプロイのworkflowとの関係は、次のページ[AWSへの全体デプロイ](./deploy.html)で扱います。
 
 ## 理解度チェック
 

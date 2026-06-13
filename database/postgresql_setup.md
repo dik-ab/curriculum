@@ -9,7 +9,7 @@ nav_order: 2
 
 [前のページ](what_is_database.html)でデータベースの概念とSQLの基礎を学びました。このページでは、実際にPostgreSQL 16をDocker Composeで起動し、`psql` というコマンドラインツールから生のSQLを一通り実行します。「読めるSQL」を「書けるSQL」にすることが目的です。
 
-PostgreSQLの起動には、[Docker基礎](../docker/)で学んだ知識をそのまま使います。特に[開発環境をcomposeで組む](../docker/dev_environment.html)で作ったAPI+DBの構成が前提です。
+PostgreSQLの起動には、[Docker基礎](../docker/)で学んだ知識をそのまま使います。特に[開発環境をcomposeで組む](../docker/dev_environment.html)で確立した標準形（PostgreSQLのみcompose、APIはローカル）が前提です。
 
 ## 学習目標
 
@@ -34,7 +34,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: appdb
+      POSTGRES_DB: memo
     ports:
       - "5432:5432"
     volumes:
@@ -48,7 +48,7 @@ volumes:
 
 - `image: postgres:16` — PostgreSQL 16の公式イメージを使います。バージョンを固定するのは、[Dockerfileのページ](../docker/dockerfile.html)で学んだとおり「環境を再現可能にする」ためです
 - `POSTGRES_USER` / `POSTGRES_PASSWORD` — データベースに接続するためのユーザー名とパスワードです。開発環境なので簡単な値にしていますが、本番環境では推測されない値を使います
-- `POSTGRES_DB: appdb` — 起動時に `appdb` という名前のデータベースを自動作成します
+- `POSTGRES_DB: memo` — 起動時に `memo` という名前のデータベースを自動作成します。この章の目的は[バックエンド基礎で作ったメモAPI](../backend/crud_practice.html)のデータを永続化することなので、DB名も `memo` です
 - `ports: "5432:5432"` — PostgreSQLの標準ポート5432を、手元のPC（ホスト）にも公開します。後でPrismaがここに接続します
 - `volumes: db-data:...` — [ボリューム](../docker/docker_compose.html)を使い、コンテナを削除してもデータが消えないようにしています。`/var/lib/postgresql/data` はPostgreSQLがデータファイルを置く場所です
 
@@ -92,14 +92,14 @@ myapp-db-1   postgres:16   "docker-entrypoint.s…"   db        10 seconds ago  
 コンテナの中でpsqlを起動しましょう。[コンテナ内でコマンドを実行する](../docker/install_and_basics.html) `docker compose exec` を使います。
 
 ```bash
-docker compose exec db psql -U postgres -d appdb
+docker compose exec db psql -U postgres -d memo
 ```
 
 **コード解説**
 
 - `docker compose exec db` — `db` サービスのコンテナ内でコマンドを実行します
 - `psql -U postgres` — ユーザー `postgres`（compose.yamlの `POSTGRES_USER`）として接続します
-- `-d appdb` — 接続先のデータベース名（compose.yamlの `POSTGRES_DB`）です
+- `-d memo` — 接続先のデータベース名（compose.yamlの `POSTGRES_DB`）です
 
 実行結果の例:
 
@@ -107,10 +107,10 @@ docker compose exec db psql -U postgres -d appdb
 psql (16.4 (Debian 16.4-1.pgdg120+1))
 Type "help" for help.
 
-appdb=#
+memo=#
 ```
 
-`appdb=#` というプロンプトが出れば接続成功です。ここからはSQLとpsqlのコマンドを打ち込めます。
+`memo=#` というプロンプトが出れば接続成功です。ここからはSQLとpsqlのコマンドを打ち込めます。
 
 ### psqlの基本コマンド
 
@@ -153,7 +153,7 @@ CREATE TABLE
 テーブルができたか確認しましょう。
 
 ```
-appdb=# \dt
+memo=# \dt
 ```
 
 実行結果の例:
@@ -169,7 +169,7 @@ appdb=# \dt
 `\d users` でテーブルの構造も確認できます。
 
 ```
-appdb=# \d users
+memo=# \d users
 ```
 
 実行結果の例:
@@ -499,7 +499,7 @@ JOINにはいくつか種類がありますが、まずはこの基本形（INNE
 psqlを終了するには `\q` を入力します。
 
 ```
-appdb=# \q
+memo=# \q
 ```
 
 コンテナを停止する場合は次のとおりです。
@@ -510,11 +510,11 @@ docker compose stop
 
 `stop` ならボリュームのデータは残るので、次回 `docker compose up -d` すれば作ったテーブルもデータもそのまま使えます。`docker compose down -v` とすると**ボリュームごと削除されてデータが消える**ので、消したい場合だけ使ってください。
 
-なお、ここで作った `users` / `posts` テーブルはSQL練習用です。次のページからはPrismaがテーブルを管理するため、このまま残しておいても構いませんし、`DROP TABLE posts; DROP TABLE users;`（テーブルの削除。外部キーの都合で `posts` が先です）で消しても構いません。
+なお、ここで作った `users` / `posts` テーブルはSQL練習用です。次のページからはPrismaがテーブルを管理するため、このまま残しておいても構いませんし、`DROP TABLE posts; DROP TABLE users;`（テーブルの削除。外部キーの都合で `posts` が先です）で消しても構いません。ただし[マイグレーションのページ](schema_and_migration.html)で `prisma migrate dev` を初めて実行する際、PrismaがこれらのPrisma管理外のテーブルを検出し、データベースのリセットを促すことがあります。練習用テーブルはここでDROPしておくのが無難です。
 
 ## 理解度チェック
 
-**Q1. `docker compose exec db psql -U postgres -d appdb` というコマンドの各部分は何をしていますか。**
+**Q1. `docker compose exec db psql -U postgres -d memo` というコマンドの各部分は何をしていますか。**
 
 <details markdown="1">
 <summary>解答を見る</summary>
@@ -522,9 +522,9 @@ docker compose stop
 - `docker compose exec db` — Composeで起動中の `db` サービスのコンテナ内でコマンドを実行する
 - `psql` — PostgreSQLのコマンドラインクライアントを起動する
 - `-U postgres` — ユーザー `postgres` として接続する
-- `-d appdb` — データベース `appdb` に接続する
+- `-d memo` — データベース `memo` に接続する
 
-つまり「dbコンテナの中でpsqlを起動し、postgresユーザーとしてappdbデータベースに接続する」コマンドです。
+つまり「dbコンテナの中でpsqlを起動し、postgresユーザーとしてmemoデータベースに接続する」コマンドです。
 
 </details>
 
