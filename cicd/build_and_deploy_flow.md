@@ -149,13 +149,15 @@ docker build -t sns-backend .
 ```dockerfile
 FROM node:20
 WORKDIR /app
-RUN corepack enable pnpm
+RUN corepack enable pnpm && corepack prepare pnpm@9 --activate
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm run build         # ← この中でtscが動き、dist/ が作られる
 CMD ["node", "dist/main.js"]
 ```
+
+なお `corepack prepare pnpm@9 --activate` は、pnpmを9系に固定するためのものです。Corepackは固定しないと最新のpnpmを取得し、Node.js 20非対応のバージョンが入ることがあります（→ [Dockerfile](../docker/dockerfile.html)）。
 
 つまりDockerイメージとは、「`dist/`（tscの成果物）+ node_modules + Node.js 20本体 + OSの最小構成」を**1つの箱に固めた成果物**です。
 

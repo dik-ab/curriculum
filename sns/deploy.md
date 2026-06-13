@@ -89,14 +89,14 @@ flowchart LR
 ```dockerfile
 # ---- ステージ1: 依存関係のインストール ----
 FROM node:20-slim AS deps
-RUN corepack enable pnpm
+RUN corepack enable pnpm && corepack prepare pnpm@9 --activate
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 # ---- ステージ2: ビルド ----
 FROM node:20-slim AS build
-RUN corepack enable pnpm
+RUN corepack enable pnpm && corepack prepare pnpm@9 --activate
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
@@ -106,7 +106,7 @@ RUN pnpm run build
 
 # ---- ステージ3: 実行 ----
 FROM node:20-slim AS runner
-RUN corepack enable pnpm
+RUN corepack enable pnpm && corepack prepare pnpm@9 --activate
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 ENV NODE_ENV=production
@@ -122,7 +122,7 @@ CMD ["sh", "./docker-entrypoint.sh"]
 **コード解説**
 
 - `FROM node:20-slim AS deps` … ステージ1の開始です。`node:20-slim` はNode.js 20入りの軽量イメージで、`AS deps` でこのステージに名前を付けます（→ [Dockerfileの書き方](../docker/dockerfile.html)のマルチステージビルド）
-- `RUN corepack enable pnpm` … コンテナ内でpnpmを使えるようにします。ステージごとにまっさらな環境から始まるので、pnpmを使う各ステージで有効化が必要です（→ [Dockerfileの書き方](../docker/dockerfile.html)）
+- `RUN corepack enable pnpm && corepack prepare pnpm@9 --activate` … コンテナ内でpnpmを使えるようにします。ステージごとにまっさらな環境から始まるので、pnpmを使う各ステージで有効化が必要です（→ [Dockerfileの書き方](../docker/dockerfile.html)）。`corepack prepare pnpm@9 --activate` を付けているのは、Corepackは固定しないと最新のpnpmを取得し、Node.js 20非対応のバージョンが入ることがあるため、9系に固定する必要があるからです
 - `COPY package.json pnpm-lock.yaml ./` と `RUN pnpm install --frozen-lockfile` … 依存定義だけを先にコピーしてからインストールします。コードを変更しても依存が変わらなければ**このレイヤーのキャッシュが効く**ようにする定石でした（`--frozen-lockfile` はlockファイルどおりに入れるCI/本番向けオプションです）
 - `RUN apt-get update -y && apt-get install -y openssl ...` … PrismaのクエリエンジンがOpenSSLを必要とするため、slimイメージに追加インストールします。`rm -rf /var/lib/apt/lists/*` はaptのキャッシュを消してイメージを小さく保つ書き方です
 - `RUN pnpm exec prisma generate` … Prisma Clientを生成します。[Prisma導入](../database/prisma_setup.html)で学んだとおり、`@prisma/client` はスキーマから生成されるコードなので、**ビルド前に必ずgenerateが必要**です
@@ -131,6 +131,21 @@ CMD ["sh", "./docker-entrypoint.sh"]
 - `CMD ["sh", "./docker-entrypoint.sh"]` … 起動コマンドを直接書かず、次に作るシェルスクリプトに任せます
 
 なお、本来はステージ3で `pnpm install --prod --frozen-lockfile`（本番用依存のみ）に絞ってイメージを小さくするのが定石です（→ [Dockerfileの書き方](../docker/dockerfile.html)）。今回は起動時に `prisma migrate deploy` を実行するため、devDependenciesに入っている `prisma` CLIが本番イメージにも必要になり、簡単のためnode_modulesを丸ごと持ち込んでいます。`prisma` を `dependencies` に移して `--prod` で絞る方法もある、と覚えておいてください。
+
+### .dockerignore — ホストのnode_modulesを持ち込まない
+
+Dockerfileと一緒に、`.dockerignore` も必ず作ります（→ [Dockerfileの書き方](../docker/dockerfile.html)で学んだ「イメージ作成時にコピー対象から除外するファイル」の一覧です）。
+
+**`backend/.dockerignore`**
+
+```
+node_modules
+dist
+.env
+cdk.out
+```
+
+これを作らずにローカルの `node_modules` がある状態でビルドすると、`COPY . .` がホスト（macOSなど）用のネイティブバイナリをLinuxコンテナに持ち込んでしまい、起動時に `invalid ELF header` というエラーでクラッシュします。
 
 ### 起動スクリプト: マイグレーションしてから起動する
 

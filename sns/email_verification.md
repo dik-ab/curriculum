@@ -412,7 +412,8 @@ export default function VerifyEmailPage({ path }: Props) {
 **`frontend/src/pages/RegisterPage.tsx`**（変更箇所のみ）
 
 ```tsx
-export default function RegisterPage({ navigate }: Props) {
+// 変更: navigate を使わなくなるので、type Props の定義ごと削除する
+export default function RegisterPage() {
   // ...既存の useState 群はそのまま...
   const [registered, setRegistered] = useState(false); // 追加
 
@@ -456,7 +457,7 @@ export default function RegisterPage({ navigate }: Props) {
 **コード解説**
 
 - `registered` state — 「登録が完了したか」を持ち、`true` なら案内文、`false` ならフォームを表示します。
-- `navigate` は使わなくなりますが、Propsの形は変えずに残して構いません。
+- `navigate` は使わなくなるので、`type Props` の定義ごと削除して引数なしのコンポーネントにします。未使用の引数が残っていると、Vite雛形のTypeScript設定（`noUnusedParameters`）とESLintにより `pnpm run build` や `pnpm run lint` が失敗するためです。
 
 ### App.tsx の変更 — ルートの追加
 
@@ -478,7 +479,7 @@ export default function App() {
     }
   }, [path]);
 
-  if (path === "/register") return <RegisterPage navigate={navigate} />;
+  if (path === "/register") return <RegisterPage />; // 変更: navigate を渡さない
   if (path === "/login") return <LoginPage navigate={navigate} />;
   if (path.startsWith("/verify-email")) return <VerifyEmailPage path={path} />; // 追加
   return <TemporaryHome navigate={navigate} />;
@@ -489,6 +490,7 @@ export default function App() {
 
 - `path.startsWith("/verify-email")` — このパスはクエリ（`?token=...`）が付くため、完全一致ではなく前方一致で判定します。
 - `isPublic` — ログインなしで開ける画面の一覧です。確認画面を加えました。
+- `<RegisterPage />` — RegisterPageから `navigate` のPropsを削除したので、こちらも渡さない形に変えます。
 
 ## 動作確認
 

@@ -397,6 +397,8 @@ flowchart TD
 
 進め方について、いくつか指針を示しておきます。
 
+> **完成形のコード**: [practice/sns-app](https://github.com/dik-ab/curriculum/tree/main/practice/sns-app)（全機能・テスト・Docker動作検証済み）。手詰まりになったら参照してください。
+
 ### 1ページ終えるごとにコミットする
 
 [Gitの基本コマンド](../git/basic_commands.html)で学んだ通り、コミットは「動く状態のセーブポイント」です。各ページの最後で必ず動作確認をしてコミットしてください。次のページで動かなくなっても、`git diff` でどこを変えたかを確認したり、最悪の場合は前のセーブポイントに戻ったりできます。

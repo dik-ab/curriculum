@@ -224,7 +224,7 @@ volumes:
 # ---- ステージ1: 開発用 ----
 FROM node:20-slim AS development
 
-RUN corepack enable pnpm
+RUN corepack enable pnpm && corepack prepare pnpm@9 --activate
 
 WORKDIR /app
 
@@ -244,7 +244,7 @@ RUN pnpm run build
 # ---- ステージ3: 本番用（最終イメージ） ----
 FROM node:20-slim
 
-RUN corepack enable pnpm
+RUN corepack enable pnpm && corepack prepare pnpm@9 --activate
 
 WORKDIR /app
 
@@ -264,6 +264,7 @@ CMD ["node", "dist/main.js"]
 **コード解説**
 
 - `FROM node:20-slim AS development` — 開発用ステージです。依存をインストールし、ウォッチモード（`start:dev`）で起動します。`devDependencies` も含めてインストールするので、TypeScriptコンパイラも使えます。
+- `RUN corepack enable pnpm && corepack prepare pnpm@9 --activate` — Corepackは固定しないと最新のpnpmを取得し、Node.js 20非対応のバージョンが入ることがあるため、9系に固定します（→ [Dockerfileを書く](dockerfile.html)）。
 - `FROM development AS builder` — ビルド用ステージは、開発用ステージを**土台として再利用**しています（`FROM` には手前のステージ名も指定できます）。依存インストールやCOPYをやり直す必要がなく、`pnpm run build` を足すだけで済みます。
 - ステージ3（本番用） — [Dockerfileを書く](dockerfile.html)の本番用と同じです。`docker build` をターゲット指定なしで実行すると、**最後のステージ**が最終イメージになるため、本番ビルドの手順はこれまでと変わりません。
 

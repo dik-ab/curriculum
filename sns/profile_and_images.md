@@ -502,7 +502,7 @@ import { User } from "../types";
 
 type Me = User & { email: string };
 
-export function SettingsPage() {
+export default function SettingsPage() {
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -658,7 +658,7 @@ export function SettingsPage() {
 **`frontend/src/App.tsx`（出し分けへの追記イメージ）**
 
 ```tsx
-import { SettingsPage } from "./pages/SettingsPage";
+import SettingsPage from "./pages/SettingsPage";
 
 // ...path による出し分けの並びに追加...
 if (path === "/settings") {

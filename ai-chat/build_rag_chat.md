@@ -77,7 +77,7 @@ flowchart LR
 ```bash
 nest new rag-chat-api
 cd rag-chat-api
-pnpm add @anthropic-ai/sdk @nestjs/config class-validator class-transformer dotenv
+pnpm add @anthropic-ai/sdk @nestjs/config@3 class-validator class-transformer dotenv
 pnpm add -D prisma@5
 pnpm add @prisma/client@5
 ```
@@ -85,7 +85,7 @@ pnpm add @prisma/client@5
 **コード解説**
 
 - `@anthropic-ai/sdk` — Claude APIの公式SDK
-- `@nestjs/config` — NestJSで`.env`を読み込むための公式モジュール
+- `@nestjs/config` — NestJSで`.env`を読み込むための公式モジュール。`@3` はNestJS 10系に対応するメジャーバージョンの固定です（無指定だと最新版が入り、peer dependencyの不整合を起こすことがあります）
 - `class-validator` / `class-transformer` — [DTOとバリデーション](../backend/dto_and_validation.html)で学んだ入力チェック用
 - `prisma` / `@prisma/client` — [Prismaの導入](../database/prisma_setup.html)と同じ構成です
 - `dotenv` — NestJSを経由しない単体スクリプト（取り込みスクリプト）で`.env`を読むために使います

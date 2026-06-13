@@ -405,8 +405,10 @@ export class ConversationsController {
 
 ```bash
 cd backend
-pnpm add @nestjs/websockets @nestjs/platform-socket.io socket.io
+pnpm add @nestjs/websockets@10 @nestjs/platform-socket.io@10 socket.io
 ```
+
+`@10` は、NestJS 10系プロジェクトとのpeer dependency不整合を防ぐためのメジャーバージョン固定です（→ [ユーザー登録とログイン（JWT認証）](./auth.html)で説明した理由と同じです）。
 
 実行結果の例:
 

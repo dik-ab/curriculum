@@ -259,9 +259,11 @@ sequenceDiagram
 
 ```bash
 cd sns-app/backend
-pnpm add bcrypt @nestjs/jwt
+pnpm add bcrypt@5 @nestjs/jwt@10
 pnpm add -D @types/bcrypt
 ```
+
+`@10` や `@5` はメジャーバージョンの固定です。バージョンを指定しないと最新版（NestJS 11向けなど）が入り、NestJS 10系のプロジェクトとpeer dependencyの不整合を起こすことがあるため、本体に合わせたメジャーバージョンを明示します。
 
 実行結果の例:
 
@@ -279,6 +281,16 @@ Done in 3.4s
 - `bcrypt` — 先ほど学んだパスワードハッシュ化ライブラリ
 - `@nestjs/jwt` — JWTの発行・検証を行うNestJS公式モジュール
 - `@types/bcrypt` — `bcrypt` の型定義（開発時のみ必要なので `-D`）
+
+> **注意: pnpm 10以降ではbcryptのビルドがブロックされます**
+>
+> pnpm 10以降は、セキュリティのためパッケージのネイティブビルドスクリプトをデフォルトでブロックします。bcryptはインストール時のビルドが必要なため、起動時に `MODULE_NOT_FOUND` エラーになる場合は、`backend/package.json` に次の設定を追加してから `pnpm install` をやり直してください。
+>
+> ```json
+> "pnpm": {
+>   "onlyBuiltDependencies": ["bcrypt"]
+> }
+> ```
 
 なお、NestJSには認証ライブラリPassport（パスポート）を組み合わせる方法もありますが、このカリキュラムでは**あえて使いません**。仕組みをブラックボックスにせず、Guardを自分の手で書いて「認証がどう動いているか」を理解することを優先します。
 

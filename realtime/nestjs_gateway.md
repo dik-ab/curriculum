@@ -97,7 +97,7 @@ nest new mini-chat
 
 ```bash
 cd mini-chat
-pnpm add @nestjs/websockets @nestjs/platform-socket.io
+pnpm add @nestjs/websockets@10 @nestjs/platform-socket.io@10
 ```
 
 実行結果の例:
@@ -114,6 +114,7 @@ dependencies:
 
 - `@nestjs/websockets` — Gatewayや`@SubscribeMessage`などNestJSのWebSocket機能本体です。
 - `@nestjs/platform-socket.io` — その土台としてSocket.IOを使うためのアダプタです。NestJSは土台を差し替えられる設計になっており、今回はSocket.IOを選んだ、という関係です。
+- `@10` — メジャーバージョンの固定です。バージョンを指定しないと最新版（NestJS 11向けなど）が入り、NestJS 10系のプロジェクトとpeer dependencyの不整合を起こすことがあるため、本体に合わせて固定します。
 
 ### Gatewayの生成
 

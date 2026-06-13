@@ -99,7 +99,7 @@ dist
 ```dockerfile
 FROM node:20-slim
 
-RUN corepack enable pnpm
+RUN corepack enable pnpm && corepack prepare pnpm@9 --activate
 
 WORKDIR /app
 
@@ -135,10 +135,10 @@ FROM node:20-slim
 ### RUN corepack enable pnpm — コンテナ内でpnpmを使えるようにする
 
 ```dockerfile
-RUN corepack enable pnpm
+RUN corepack enable pnpm && corepack prepare pnpm@9 --activate
 ```
 
-`node:20-slim` イメージにはNode.jsとnpmは入っていますが、本カリキュラムで使っているpnpmは入っていません。そこで、Node.js 20に同梱されているCorepack（コアパック。パッケージマネージャを管理するツール）を使ってpnpmを有効化します。手元のPCでpnpmを導入したときと同じコマンドを、コンテナの中でも実行するわけです。`RUN` 命令の詳しい意味はこの後すぐ説明します。
+`node:20-slim` イメージにはNode.jsとnpmは入っていますが、本カリキュラムで使っているpnpmは入っていません。そこで、Node.js 20に同梱されているCorepack（コアパック。パッケージマネージャを管理するツール）を使ってpnpmを有効化します。手元のPCでpnpmを導入したときと同じコマンドを、コンテナの中でも実行するわけです。続く `corepack prepare pnpm@9 --activate` は、pnpmのバージョンを9系に固定する指定です。Corepackは固定しないと最新のpnpmを取得し、Node.js 20非対応のバージョンが入って `pnpm install` が失敗することがあるため、9系に固定します。`RUN` 命令の詳しい意味はこの後すぐ説明します。
 
 ### WORKDIR — 作業ディレクトリを決める
 
@@ -232,7 +232,7 @@ docker build -t memo-api:1.0 .
 ```
 [+] Building 45.2s (13/13) FINISHED
  => [1/7] FROM docker.io/library/node:20-slim
- => [2/7] RUN corepack enable pnpm
+ => [2/7] RUN corepack enable pnpm && corepack prepare pnpm@9 --activate
  => [3/7] WORKDIR /app
  => [4/7] COPY package.json pnpm-lock.yaml ./
  => [5/7] RUN pnpm install --frozen-lockfile
@@ -348,7 +348,7 @@ docker build -t memo-api:1.0 .
 
 ```
 [+] Building 1.3s (13/13) FINISHED
- => CACHED [2/7] RUN corepack enable pnpm
+ => CACHED [2/7] RUN corepack enable pnpm && corepack prepare pnpm@9 --activate
  => CACHED [3/7] WORKDIR /app
  => CACHED [4/7] COPY package.json pnpm-lock.yaml ./
  => CACHED [5/7] RUN pnpm install --frozen-lockfile
@@ -375,7 +375,7 @@ Dockerfileを次のように書き換えます。
 # ---- ステージ1: ビルド用（builderと名付ける） ----
 FROM node:20-slim AS builder
 
-RUN corepack enable pnpm
+RUN corepack enable pnpm && corepack prepare pnpm@9 --activate
 
 WORKDIR /app
 
@@ -390,7 +390,7 @@ RUN pnpm run build
 # ---- ステージ2: 実行用（最終イメージになる） ----
 FROM node:20-slim
 
-RUN corepack enable pnpm
+RUN corepack enable pnpm && corepack prepare pnpm@9 --activate
 
 WORKDIR /app
 
