@@ -1,6 +1,6 @@
 # プログラミング学習カリキュラム
 
-このリポジトリは、プログラミング学習のための環境構築ガイドを提供しています。
+このリポジトリは、プログラミング未経験から半年でフルスタックのSNSアプリケーションを開発・デプロイできるようになるための学習カリキュラムです。入門編（環境構築〜TypeScript）とマスターコース（Git/React/NestJS/Prisma/Docker/テスト/CI/CD/AWS/リアルタイム通信/AI開発/SNS開発）で構成されています。
 
 ## GitHub Pagesでの表示
 
@@ -38,8 +38,24 @@ bundle exec jekyll serve
 - `_config.yml` - Jekyll設定（GitHub PagesとローカルPagesで共通）
 - `serve.sh` - ローカルプレビュー起動スクリプト
 - `Gemfile` - ローカル用の依存関係（jekyll-remote-themeは除外）
-- `environment/` - 環境構築ガイド
-  - `mac_vscode.md` - Mac版 VS Code セットアップ
-  - `windows_vscode.md` - Windows版 VS Code セットアップ
-  - `live_preview.md` - 拡張機能のセットアップ
-  - `init.md` - 初期設定（タイピング練習）
+
+### 入門編
+
+- `environment/` - 環境構築ガイド（VS Code、ターミナル、Node.js）
+- `frontend/` - HTML/CSS/JavaScript基礎と練習問題
+- `typescript/` - TypeScript基礎と練習問題
+- `final_project.md` - 入門編最終問題
+- `practice/` - 練習問題の回答コード
+
+### マスターコース（中級編）
+
+- `git/` `react/` `backend/` `docker/` `database/` - 開発スキルの基礎
+- `fullstack-todo/` - 実践: フルスタックTodoアプリ
+- `tooling/` `testing/` `cicd/` `aws/` `realtime/` - 品質・インフラ・運用
+- `ai/` `ai-chat/` - AI開発入門とRAGチャット開発
+- `sns/` - SNS開発（最終プロジェクト）
+
+### その他
+
+- `.authoring/` - 教材執筆規約とTOC（サイトには公開されない）
+- `../master-course/` - 同内容の静的HTML版（Jekyll非依存）

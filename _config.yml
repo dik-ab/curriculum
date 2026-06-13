@@ -10,6 +10,10 @@ plugins:
 # 検索を有効化
 search_enabled: true
 
+# Mermaid図の描画を有効化
+mermaid:
+  version: "10.9.1"
+
 # フッター
 back_to_top: true
 back_to_top_text: "トップに戻る"
